@@ -1,0 +1,95 @@
+import os
+import shutil
+import ctypes
+import platform
+import subprocess
+from pathlib import Path
+
+def is_admin():
+    try:
+        return ctypes.windll.shell32.IsUserAnAdmin()
+    except:
+        return False
+
+def clean_ram():
+    """
+    Cleans RAM by calling EmptyWorkingSet on all reachable processes.
+    Requires psutil for process enumeration.
+    """
+    try:
+        import psutil
+    except ImportError:
+        return "Erro: psutil não instalado. Execute 'pip install psutil'"
+
+    count = 0
+    errors = 0
+    
+    # Get PSAPI dll
+    psapi = ctypes.WinDLL('psapi.dll')
+    kernel32 = ctypes.WinDLL('kernel32.dll')
+    
+    PROCESS_QUERY_INFORMATION = 0x0400
+    PROCESS_SET_QUOTA = 0x0100
+    
+    for proc in psutil.process_iter(['pid', 'name']):
+        try:
+            # Skip system idle and current process if needed, but EmptyWorkingSet is safe
+            handle = kernel32.OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_SET_QUOTA, False, proc.info['pid'])
+            if handle:
+                psapi.EmptyWorkingSet(handle)
+                kernel32.CloseHandle(handle)
+                count += 1
+        except Exception:
+            errors += 1
+            
+    return f"Memória otimizada em {count} processos."
+
+def clean_temp_folders():
+    """
+    Deletes files in common temporary folders.
+    """
+    paths = [
+        os.environ.get('TEMP'),
+        os.path.join(os.environ.get('SystemRoot', 'C:\\Windows'), 'Temp'),
+        os.path.join(os.environ.get('SystemRoot', 'C:\\Windows'), 'Prefetch')
+    ]
+    
+    cleaned_size = 0
+    deleted_files = 0
+    
+    for path in paths:
+        if not path or not os.path.exists(path):
+            continue
+            
+        for item in os.listdir(path):
+            item_path = os.path.join(path, item)
+            try:
+                size = 0
+                if os.path.isfile(item_path) or os.path.islink(item_path):
+                    size = os.path.getsize(item_path)
+                    os.remove(item_path)
+                elif os.path.isdir(item_path):
+                    # Get dir size approximately
+                    for root, dirs, files in os.walk(item_path):
+                        for f in files:
+                            fp = os.path.join(root, f)
+                            if os.path.exists(fp): size += os.path.getsize(fp)
+                    shutil.rmtree(item_path)
+                
+                cleaned_size += size
+                deleted_files += 1
+            except Exception:
+                # File in use, skip
+                continue
+                
+    mb_cleaned = cleaned_size / (1024 * 1024)
+    return f"Limpeza concluída: {deleted_files} itens removidos (~{mb_cleaned:.2f} MB)."
+
+def optimize_system():
+    """
+    Runs various system optimizations.
+    """
+    results = []
+    results.append(clean_ram())
+    results.append(clean_temp_folders())
+    return "\n".join(results)

@@ -51,6 +51,12 @@ class WinRAMApp(ctk.CTk):
         self.ram_progress.grid(pady=20)
         self.ram_progress.set(0)
 
+        # Checkbox Otimizacao Completa
+        self.full_opt_var = ctk.BooleanVar(value=False)
+        self.check_full = ctk.CTkCheckBox(self.main_frame, text="Otimizacao Completa (TRIM/Defrag)", 
+                                          variable=self.full_opt_var, font=ctk.CTkFont(size=12))
+        self.check_full.grid(pady=(0, 10))
+
         # Botão Otimizar
         self.btn_optimize = ctk.CTkButton(self.main_frame, text="OTIMIZAR AGORA", 
                                           height=50, width=250, corner_radius=10,
@@ -88,7 +94,8 @@ class WinRAMApp(ctk.CTk):
     def run_optimization_task(self):
         try:
             time.sleep(1) # Efeito dramático
-            result = optimize_system()
+            full_mode = self.full_opt_var.get()
+            result = optimize_system(full=full_mode)
             self.log_text.configure(text=result)
         except Exception as e:
             self.log_text.configure(text=f"Erro durante a otimização: {e}")
