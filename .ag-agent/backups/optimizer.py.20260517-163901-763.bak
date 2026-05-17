@@ -1,4 +1,4 @@
-import os
+﻿import os
 import shutil
 import ctypes
 import platform
@@ -22,7 +22,6 @@ def kill_memory_hogs():
     ]
     killed = 0
     freed_ram = 0
-    errors = []
     
     try:
         import psutil
@@ -32,168 +31,124 @@ def kill_memory_hogs():
                     freed_ram += proc.info['memory_info'].rss / (1024 * 1024)
                     proc.kill()
                     killed += 1
-            except Exception as e:
-                errors.append(f"Erro ao encerrar {proc.info.get('name', 'PID '+str(proc.info.get('pid')))}: {e}")
-                
-        msg = f"Expurgo: {killed} parasitas encerrados (~{freed_ram:.0f}MB liberados)."
-        if errors:
-            msg += "\n    Avisos: " + " | ".join(errors[:3])
-        return msg
+            except:
+                continue
+        return f"Expurgo: {killed} parasitas encerrados (~{freed_ram:.0f}MB liberados)."
     except Exception as e:
-        return f"Erro fatal no expurgo de processos: {e}"
+        return f"Erro no expurgo de processos: {e}"
 
 def restart_explorer():
     try:
-        r = subprocess.run(['taskkill', '/F', '/IM', 'explorer.exe'], capture_output=True, text=True)
+        subprocess.run(['taskkill', '/F', '/IM', 'explorer.exe'], capture_output=True)
         subprocess.Popen(['explorer.exe'])
-        if r.returncode != 0 and "not found" not in r.stderr.lower():
-            return f"Aviso ao matar explorer: {r.stderr.strip()}"
         return "Windows Shell reiniciado (Vazamento de RAM contido)."
-    except Exception as e:
-        return f"Falha ao reiniciar o Windows Shell: {e}"
+    except:
+        return "Falha ao reiniciar o Windows Shell."
 
 def optimize_virtual_memory():
-    if not is_admin(): return "Aviso: Otimizar MemÃ³ria Virtual exige Admin."
+    if not is_admin(): return "Aviso: Otimizar Memória Virtual exige Admin."
     try:
         script = "Set-WmiInstance -Class Win32_ComputerSystem -EnableAllPrivileges -Arguments @{AutomaticManagedPagefile=$true}"
-        r = subprocess.run(['powershell', '-Command', script], capture_output=True, text=True)
-        if r.returncode != 0:
-            return f"Erro no WMI Pagefile: {r.stderr.strip()}"
-        return "MemÃ³ria Virtual (Pagefile) transferida e otimizada."
-    except Exception as e:
-        return f"Erro crÃ­tico ao configurar MemÃ³ria Virtual: {e}"
+        subprocess.run(['powershell', '-Command', script], capture_output=True)
+        return "Memória Virtual (Pagefile) transferida e otimizada."
+    except:
+        return "Erro ao configurar Memória Virtual."
 
 def disable_useless_services():
     services = ["SysMain", "DiagTrack", "WerSvc"]
-    logs = []
     for svc in services:
         try:
-            r1 = subprocess.run(['sc', 'config', svc, 'start=', 'disabled'], capture_output=True, text=True)
-            r2 = subprocess.run(['net', 'stop', svc], capture_output=True, text=True)
-            if r1.returncode != 0 and "Access is denied" in r1.stderr:
-                logs.append(f"[sc {svc}] Acesso Negado (Sem Admin)")
-            elif r1.returncode != 0 and "OpenService FAILED 1060" not in r1.stdout:
-                logs.append(f"[sc {svc}] {r1.stderr.strip() or r1.stdout.strip()}")
-                
-            if r2.returncode != 0 and "not started" not in r2.stderr.lower() and "nÃ£o foi iniciado" not in r2.stderr.lower():
-                logs.append(f"[net stop {svc}] {r2.stderr.strip() or r2.stdout.strip()}")
-        except Exception as e: 
-            logs.append(f"[Falha API {svc}]: {e}")
-            
-    if logs:
-        unique_logs = list(set([log.replace("\n", " ").strip() for log in logs if log.strip()]))
-        return "ServiÃ§os ajustados com avisos:\n    " + "\n    ".join(unique_logs)
-    return "ServiÃ§os de telemetria e SysMain desativados perfeitamente."
+            subprocess.run(['sc', 'config', svc, 'start=', 'disabled'], capture_output=True)
+            subprocess.run(['net', 'stop', svc], capture_output=True)
+        except Exception as e: pass
+    return "Serviços de telemetria e SysMain desativados."
 
 def disable_vbs_and_visuals():
-    logs = []
     try:
+        # VBS
         with winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity") as key:
             winreg.SetValueEx(key, "Enabled", 0, winreg.REG_DWORD, 0)
-    except Exception as e: logs.append(f"VBS falhou: {e}")
-    
-    try:
+        # Visuais
         with winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects") as key:
             winreg.SetValueEx(key, "VisualFXSetting", 0, winreg.REG_DWORD, 2)
-    except Exception as e: logs.append(f"Visuais falhou: {e}")
-    
-    if logs: return "OtimizaÃ§Ã£o Visual/VBS concluÃ­da com erros: " + " | ".join(logs)
-    return "VBS (Virtualization) e Efeitos Visuais otimizados."
+        return "VBS (Virtualization) e Efeitos Visuais otimizados."
+    except Exception as e: return "Erro ao otimizar VBS/Visuais."
 
 def optimize_gpu_scheduling():
-    logs = []
     try:
+        # HAGS & Game Mode
         with winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\GraphicsDrivers") as key:
             winreg.SetValueEx(key, "HwSchMode", 0, winreg.REG_DWORD, 2)
-    except Exception as e: logs.append(f"HAGS: {e}")
+        with winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\GameBar") as key:
+            winreg.SetValueEx(key, "AutoGameModeEnabled", 0, winreg.REG_DWORD, 1)
         
-    try:
+        # MMCSS GPU Priority
         games_key_path = r"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games"
         with winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, games_key_path) as key:
             winreg.SetValueEx(key, "GPU Priority", 0, winreg.REG_DWORD, 8)
             winreg.SetValueEx(key, "Priority", 0, winreg.REG_DWORD, 6)
             winreg.SetValueEx(key, "Scheduling Category", 0, winreg.REG_SZ, "High")
             winreg.SetValueEx(key, "SFIO Priority", 0, winreg.REG_SZ, "High")
-    except Exception as e: logs.append(f"MMCSS: {e}")
-        
-    if logs: return "Agendamento GPU aplicado com erros menores: " + " | ".join(logs)
-    return "Agendamento de GPU (HAGS) e MMCSS elevados ao mÃ¡ximo."
+        return "Agendamento de GPU (HAGS) e MMCSS elevados ao máximo."
+    except Exception as e: return "Erro no agendamento de GPU."
 
 def optimize_network_latency():
-    logs = []
     try:
         with winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile") as key:
             winreg.SetValueEx(key, "NetworkThrottlingIndex", 0, winreg.REG_DWORD, 0xffffffff)
             winreg.SetValueEx(key, "SystemResponsiveness", 0, winreg.REG_DWORD, 0)
-    except Exception as e: logs.append(f"Throttling Registry: {e}")
         
-    try:
-        r1 = subprocess.run(['netsh', 'int', 'tcp', 'set', 'global', 'autotuninglevel=normal'], capture_output=True, text=True)
-        r2 = subprocess.run(['netsh', 'int', 'tcp', 'set', 'global', 'ecncapability=disabled'], capture_output=True, text=True)
-        if r1.returncode != 0: logs.append(f"TCP AutoTuning: {r1.stderr.strip() or r1.stdout.strip()}")
-        if r2.returncode != 0: logs.append(f"TCP ECN: {r2.stderr.strip() or r2.stdout.strip()}")
-    except Exception as e: logs.append(f"Netsh API: {e}")
-        
-    if logs: return "Rede otimizada com avisos: " + " | ".join(logs)
-    return "Throttling de rede removido e TCP/IP otimizado (Menor Ping)."
+        subprocess.run(['netsh', 'int', 'tcp', 'set', 'global', 'autotuninglevel=normal'], capture_output=True)
+        subprocess.run(['netsh', 'int', 'tcp', 'set', 'global', 'ecncapability=disabled'], capture_output=True)
+        return "Throttling de rede removido e TCP/IP otimizado (Menor Ping)."
+    except Exception as e: return "Erro na otimização de rede."
 
 def disable_bloat_and_compression():
-    logs = []
     try:
-        r = subprocess.run(['powershell', '-Command', 'Disable-MMAgent -mc'], capture_output=True, text=True)
-        if r.returncode != 0: logs.append(f"MMAgent: {r.stderr.strip()}")
-    except Exception as e: logs.append(f"MMAgent API: {e}")
+        subprocess.run(['powershell', '-Command', 'Disable-MMAgent -mc'], capture_output=True)
+        subprocess.run(['powercfg', '/h', 'off'], capture_output=True)
         
-    try:
-        r = subprocess.run(['powercfg', '/h', 'off'], capture_output=True, text=True)
-        if r.returncode != 0: logs.append(f"HibernaÃ§Ã£o: {r.stderr.strip() or r.stdout.strip()}")
-    except Exception as e: logs.append(f"PowerCfg API: {e}")
-        
-    try:
         with winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"Software\Policies\Microsoft\Windows\WindowsCopilot") as key:
             winreg.SetValueEx(key, "TurnOffWindowsCopilot", 0, winreg.REG_DWORD, 1)
         with winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Policies\Microsoft\Edge") as key:
             winreg.SetValueEx(key, "BackgroundModeEnabled", 0, winreg.REG_DWORD, 0)
-    except Exception as e: logs.append(f"Registry Bloat: {e}")
             
-    if logs: return "Bloatwares bloqueados com avisos: " + " | ".join(logs)
-    return "CompressÃ£o de RAM, Fast Startup e IAs em segundo plano bloqueados."
+        return "Compressão de RAM, Fast Startup e IAs em segundo plano bloqueados."
+    except Exception as e: return "Erro ao limpar Bloatware profundo."
 
 def clear_standby_and_shaders():
     results = []
     try:
         ctypes.windll.kernel32.SetSystemFileCacheSize(ctypes.c_size_t(-1), ctypes.c_size_t(-1), 0)
-        results.append("Standby List limpo.")
-    except Exception as e: results.append(f"Aviso Standby List: {e}")
+        results.append("Standby List (Cache de Memória) limpo nativamente.")
+    except Exception as e: results.append("Aviso: Falha ao limpar Standby List.")
     
     try:
         shader_path = os.path.join(os.environ.get('LOCALAPPDATA', ''), 'D3DSCache')
         if os.path.exists(shader_path):
             shutil.rmtree(shader_path, ignore_errors=True)
-            results.append("Cache Shaders expurgado.")
-    except Exception as e: results.append(f"Aviso Shaders: {e}")
+            results.append("Cache de Shaders do DirectX expurgado.")
+    except Exception as e: pass
     return " | ".join(results)
 
 def clean_ram():
     try: import psutil
-    except: return "Erro: psutil nÃ£o instalado."
+    except: return "Erro: psutil não instalado."
     
     count = 0
     psapi = ctypes.WinDLL('psapi.dll')
     kernel32 = ctypes.WinDLL('kernel32.dll')
     PROCESS_QUERY_INFORMATION = 0x0400
     PROCESS_SET_QUOTA = 0x0100
-    errors = []
     
     for _ in range(2):
         for proc in psutil.process_iter(['pid']):
             try:
                 handle = kernel32.OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_SET_QUOTA, False, proc.info['pid'])
                 if handle:
-                    res = psapi.EmptyWorkingSet(handle)
-                    if res:
-                        count += 1
+                    psapi.EmptyWorkingSet(handle)
                     kernel32.CloseHandle(handle)
+                    count += 1
             except: continue
             
     return f"Working Set esvaziado brutalmente em {count//2} processos."
@@ -206,7 +161,6 @@ def clean_temp_folders():
         os.path.join(os.environ.get('SystemRoot', 'C:\\'), 'Windows', 'SoftwareDistribution', 'Download')
     ]
     deleted = 0
-    errors = 0
     for path in paths:
         if not path or not os.path.exists(path): continue
         for item in os.listdir(path):
@@ -215,51 +169,32 @@ def clean_temp_folders():
                 if os.path.isfile(ip): os.remove(ip)
                 else: shutil.rmtree(ip)
                 deleted += 1
-            except: 
-                errors += 1
-                continue
-    msg = f"Limpeza: {deleted} arquivos removidos."
-    if errors > 0:
-        msg += f" (Falha em {errors} arquivos em uso)."
-    return msg
+            except: continue
+    return f"Limpeza: {deleted} arquivos removidos."
 
 def flush_dns():
     try:
-        r = subprocess.run(['ipconfig', '/flushdns'], capture_output=True, text=True)
-        if r.returncode != 0:
-            return f"Aviso DNS: {r.stderr.strip() or r.stdout.strip()}"
+        subprocess.run(['ipconfig', '/flushdns'], capture_output=True, text=True, check=True)
         return 'Cache DNS limpo.'
-    except Exception as e: return f'Erro DNS API: {e}'
+    except: return 'Erro DNS.'
 
 def optimize_drive():
     try:
-        r = subprocess.run(['defrag', 'C:', '/O'], capture_output=True, text=True)
-        if r.returncode != 0:
-            return f"Aviso Disco: {r.stderr.strip() or r.stdout.strip()}"
+        subprocess.run(['defrag', 'C:', '/O'], capture_output=True, text=True, check=True)
         return 'Disco otimizado (TRIM/Defrag).'
-    except Exception as e: return f'Erro no disco API: {e}'
+    except: return 'Erro no disco.'
 
 def clear_event_logs():
     if not is_admin(): return "Aviso: Limpar logs exige Admin."
     try:
-        r = subprocess.run(['wevtutil', 'el'], capture_output=True, text=True)
-        if r.returncode != 0:
-            return f"Falha ao listar logs: {r.stderr.strip()}"
-            
-        logs = r.stdout.splitlines()
-        errors = 0
+        logs = subprocess.run(['wevtutil', 'el'], capture_output=True, text=True).stdout.splitlines()
         for log in logs:
-            r2 = subprocess.run(['wevtutil', 'cl', log.strip()], capture_output=True, text=True)
-            if r2.returncode != 0: errors += 1
-            
-        msg = "Logs de eventos limpos."
-        if errors > 0: msg += f" (Falhou ao limpar {errors} logs restritos)."
-        return msg
-    except Exception as e: return f"Erro fatal ao limpar logs: {e}"
+            subprocess.run(['wevtutil', 'cl', log.strip()], capture_output=True)
+        return "Logs de eventos limpos."
+    except: return "Erro ao limpar logs."
 
 def apply_performance_tweaks():
     if not is_admin(): return "Aviso: Tweaks de registro exigem Admin."
-    logs = []
     try:
         with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile", 0, winreg.KEY_SET_VALUE) as key:
             winreg.SetValueEx(key, "SystemResponsiveness", 0, winreg.REG_DWORD, 1)
@@ -268,28 +203,18 @@ def apply_performance_tweaks():
             winreg.SetValueEx(key, "AutoEndTasks", 0, winreg.REG_SZ, "1")
         with winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Policies\Microsoft\Windows\DataCollection") as key:
             winreg.SetValueEx(key, "AllowTelemetry", 0, winreg.REG_DWORD, 0)
-    except Exception as e: logs.append(f"Reg Tweaks: {e}")
-        
-    try:
-        r = subprocess.run(['powercfg', '/setactive', '8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c'], capture_output=True, text=True)
-        if r.returncode != 0: logs.append(f"Powercfg: {r.stderr.strip() or r.stdout.strip()}")
-    except Exception as e: logs.append(f"Powercfg API: {e}")
-        
-    if logs: return "Ajustes de registro aplicados com avisos: " + " | ".join(logs)
-    return "Ajustes de registro e energia aplicados."
+        subprocess.run(['powercfg', '/setactive', '8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c'], capture_output=True)
+        return "Ajustes de registro e energia aplicados."
+    except Exception as e:
+        return f"Erro nos tweaks: {e}"
 
 def reset_network():
     if not is_admin(): return "Aviso: Reset de rede exige Admin."
-    logs = []
     try:
-        r1 = subprocess.run(['netsh', 'winsock', 'reset'], capture_output=True, text=True)
-        r2 = subprocess.run(['netsh', 'int', 'ip', 'reset'], capture_output=True, text=True)
-        if r1.returncode != 0: logs.append(f"Winsock: {r1.stderr.strip() or r1.stdout.strip()}")
-        if r2.returncode != 0: logs.append(f"IP: {r2.stderr.strip() or r2.stdout.strip()}")
-    except Exception as e: logs.append(f"Net API: {e}")
-    
-    if logs: return "Protocolos de rede resetados com avisos: " + " | ".join(logs)
-    return "Protocolos de rede resetados sem erros."
+        subprocess.run(['netsh', 'winsock', 'reset'], capture_output=True)
+        subprocess.run(['netsh', 'int', 'ip', 'reset'], capture_output=True)
+        return "Protocolos de rede resetados."
+    except: return "Erro no reset de rede."
 
 def optimize_system(mode="quick"):
     res = []
@@ -314,7 +239,7 @@ def optimize_system(mode="quick"):
             restart_explorer(),
             optimize_virtual_memory()
         ]
-    elif mode == "god_mode" or mode == "all_in_one":
+    elif mode == "god_mode":
         res = [
             clean_ram(),
             clear_standby_and_shaders(),
