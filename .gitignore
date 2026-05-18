@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+.ag-agent/backups/
+.ag-agent/tmp/
+.ag-agent/speculations/
+.ag-agent/edit.lock
+.ag-agent/LAST_EDIT.md
+.ag-agent/LAST_INSPECT.md
+.ag-agent/LAST_CONTEXT.md
+.ag-agent/LAST_SEARCH.md
+.ag-agent/LAST_PREVIEW.md
+.ag-agent/LAST_PLAN.md
+.ag-agent/conflicts.json
