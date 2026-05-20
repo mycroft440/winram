@@ -1,9 +1,9 @@
 # LAST_EDIT
 
 - **Acao:** create-file
-- **Arquivo:** .gitignore
-- **Backup:** N/A (Novo)
-- **Data:** 2026-05-17 22:01:14
+- **Arquivo:** winram.pyw
+- **Backup:** winram.pyw.20260520-182045-989.bak
+- **Data:** 2026-05-20 18:20:45
 
 ### Detalhes
 Arquivo criado com sucesso desde o zero.
