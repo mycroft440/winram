@@ -728,16 +728,16 @@ class WinRAMApp(ctk.CTk):
         try:
             key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_path, 0, winreg.KEY_ALL_ACCESS)
             if self.daemon_var.get() == "on":
-                script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "winram_daemon.pyw")
-                pythonw_path = sys.executable.replace("python.exe", "pythonw.exe")
-                if not os.path.exists(pythonw_path):
-                    pythonw_path = "pythonw.exe"
-                winreg.SetValueEx(key, app_name, 0, winreg.REG_SZ, f'"{pythonw_path}" "{script_path}"')
-                subprocess.Popen([pythonw_path, script_path], creationflags=0x08000000)
+                                 script_path = os.path.abspath(__file__)
+                 pythonw_path = sys.executable.replace("python.exe", "pythonw.exe")
+                 if not os.path.exists(pythonw_path):
+                     pythonw_path = "pythonw.exe"
+                 winreg.SetValueEx(key, app_name, 0, winreg.REG_SZ, f'"{pythonw_path}" "{script_path}" "--daemon"')
+                 subprocess.Popen([pythonw_path, script_path, "--daemon"], creationflags=0x08000000)
             else:
                 try:
                     winreg.DeleteValue(key, app_name)
-                    subprocess.run('wmic process where "commandline like \'%winram_daemon.pyw%\'" call terminate', capture_output=True, creationflags=0x08000000)
+                    subprocess.run('wmic process where "commandline like \'%winram.pyw%--daemon%\'" call terminate', capture_output=True, creationflags=0x08000000)
                 except:
                     pass
             winreg.CloseKey(key)
@@ -756,7 +756,67 @@ class WinRAMApp(ctk.CTk):
             return "off"
 
 
+
+def daemon_main():
+    import psutil, ctypes, time, sys
+    mutex_name = "WinRAM_Daemon_AutoClean_Mutex"
+    kernel32 = ctypes.windll.kernel32
+    mutex = kernel32.CreateMutexW(None, False, mutex_name)
+    if kernel32.GetLastError() == 183:
+        sys.exit(0)
+
+    GAMES_LIST = ["cs2.exe", "valorant.exe", "gta5.exe", "cyberpunk2077.exe", "dota2.exe", "leagueoflegends.exe", "r5apex.exe", "overwatch.exe", "bf2042.exe"]
+    game_mode_active = False
+
+    def clean_ram():
+        psapi = ctypes.WinDLL('psapi.dll')
+        k32 = ctypes.WinDLL('kernel32.dll')
+        PROCESS_QUERY_INFORMATION = 0x0400
+        PROCESS_SET_QUOTA = 0x0100
+        for proc in psutil.process_iter(['pid']):
+            try:
+                handle = k32.OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_SET_QUOTA, False, proc.info['pid'])
+                if handle:
+                    psapi.EmptyWorkingSet(handle)
+                    k32.CloseHandle(handle)
+            except:
+                continue
+
+    def check_games_running():
+        for proc in psutil.process_iter(['name', 'pid']):
+            try:
+                if proc.info['name'] and proc.info['name'].lower() in GAMES_LIST:
+                    return proc
+            except:
+                continue
+        return None
+
+    while True:
+        try:
+            game_proc = check_games_running()
+            if game_proc and not game_mode_active:
+                try:
+                    if sys.platform == 'win32':
+                        game_proc.nice(psutil.HIGH_PRIORITY_CLASS)
+                except:
+                    pass
+                game_mode_active = True
+                clean_ram()
+            elif not game_proc and game_mode_active:
+                game_mode_active = False
+
+            if psutil.virtual_memory().percent >= 65:
+                clean_ram()
+                time.sleep(60)
+            else:
+                time.sleep(10)
+        except:
+            time.sleep(10)
+
 if __name__ == "__main__":
+    if "--daemon" in sys.argv:
+        daemon_main()
+        sys.exit(0)
     if not is_admin():
         ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, " ".join(sys.argv), None, 1)
         sys.exit()
