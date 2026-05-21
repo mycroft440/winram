@@ -1,9 +1,9 @@
 # LAST_EDIT
 
-- **Acao:** create-file
+- **Acao:** replace-text
 - **Arquivo:** winram.pyw
-- **Backup:** winram.pyw.20260520-182045-989.bak
-- **Data:** 2026-05-20 18:20:45
+- **Backup:** winram.pyw.20260521-175708-498.bak
+- **Data:** 2026-05-21 17:57:08
 
 ### Detalhes
-Arquivo criado com sucesso desde o zero.
+Ocorrencias identificadas e modificadas: 1

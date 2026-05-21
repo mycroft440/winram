@@ -88,10 +88,12 @@ def disable_useless_services():
             logs.append(f"[Falha API {svc}]: {e}")
 
     try:
-        tasks = ['\Microsoft\Windows\Customer Experience Improvement Program\Consolidator',
-                 '\Microsoft\Windows\Customer Experience Improvement Program\UsbCeip']
+        tasks = [r'\Microsoft\Windows\Customer Experience Improvement Program\Consolidator',
+             r'\Microsoft\Windows\Customer Experience Improvement Program\UsbCeip']
         for t in tasks:
             subprocess.run(['schtasks', '/Change', '/TN', t, '/Disable'], capture_output=True, creationflags=0x08000000)
+    except Exception as e: logs.append(f"Schtasks: {e}")
+
 def disable_vbs_and_visuals():
     logs = []
     try:
@@ -132,6 +134,11 @@ def optimize_gpu_scheduling():
         games_key_path = r"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games"
         with winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, games_key_path) as key:
             winreg.SetValueEx(key, "GPU Priority", 0, winreg.REG_DWORD, 8)
+    except Exception as e: logs.append(f"Games Priority: {e}")
+
+    if logs: return "Otimizacao GPU concluida com erros: " + " | ".join(logs)
+    return "GPU Scheduling otimizado."
+
 def optimize_network_latency():
     logs = []
     try:
@@ -728,12 +735,12 @@ class WinRAMApp(ctk.CTk):
         try:
             key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_path, 0, winreg.KEY_ALL_ACCESS)
             if self.daemon_var.get() == "on":
-                                 script_path = os.path.abspath(__file__)
-                 pythonw_path = sys.executable.replace("python.exe", "pythonw.exe")
-                 if not os.path.exists(pythonw_path):
-                     pythonw_path = "pythonw.exe"
-                 winreg.SetValueEx(key, app_name, 0, winreg.REG_SZ, f'"{pythonw_path}" "{script_path}" "--daemon"')
-                 subprocess.Popen([pythonw_path, script_path, "--daemon"], creationflags=0x08000000)
+                script_path = os.path.abspath(__file__)
+                pythonw_path = sys.executable.replace("python.exe", "pythonw.exe")
+                if not os.path.exists(pythonw_path):
+                    pythonw_path = "pythonw.exe"
+                winreg.SetValueEx(key, app_name, 0, winreg.REG_SZ, f'"{pythonw_path}" "{script_path}" "--daemon"')
+                subprocess.Popen([pythonw_path, script_path, "--daemon"], creationflags=0x08000000)
             else:
                 try:
                     winreg.DeleteValue(key, app_name)
