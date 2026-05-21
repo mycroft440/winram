@@ -109,6 +109,7 @@ def disable_vbs_and_visuals():
     try:
         with winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management") as key:
             winreg.SetValueEx(key, "FeatureSettingsOverride", 0, winreg.REG_DWORD, 3)
+            winreg.SetValueEx(key, "DisablePagingExecutive", 0, winreg.REG_DWORD, 1)
             winreg.SetValueEx(key, "FeatureSettingsOverrideMask", 0, winreg.REG_DWORD, 3)
     except Exception as e: logs.append(f"Spectre Mitigations: {e}")
 
@@ -772,12 +773,15 @@ def daemon_main():
     if kernel32.GetLastError() == 183:
         sys.exit(0)
 
-    GAMES_LIST = ["cs2.exe", "valorant.exe", "gta5.exe", "cyberpunk2077.exe", "dota2.exe", "leagueoflegends.exe", "r5apex.exe", "overwatch.exe", "bf2042.exe"]
+    GAMES_LIST = ["cs2.exe", "valorant.exe", "gta5.exe", "cyberpunk2077.exe", "dota2.exe", "leagueoflegends.exe", "r5apex.exe", "overwatch.exe", "bf2042.exe", "pubg.exe", "eldenring.exe", "cod.exe", "forzahorizon5.exe"]
     game_mode_active = False
 
     def clean_ram():
         psapi = ctypes.WinDLL('psapi.dll')
         k32 = ctypes.WinDLL('kernel32.dll')
+        try:
+            k32.SetSystemFileCacheSize(ctypes.c_size_t(-1), ctypes.c_size_t(-1), 0)
+        except: pass
         PROCESS_QUERY_INFORMATION = 0x0400
         PROCESS_SET_QUOTA = 0x0100
         for proc in psutil.process_iter(['pid']):
