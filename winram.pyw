@@ -1,4 +1,5 @@
 from pathlib import Path
+import concurrent.futures
 import ctypes
 import customtkinter as ctk
 import math
@@ -50,7 +51,7 @@ def kill_memory_hogs():
 
 def restart_explorer():
     try:
-        r = subprocess.run(['taskkill', '/F', '/IM', 'explorer.exe'], capture_output=True, text=True)
+        r = subprocess.run(['taskkill', '/F', '/IM', 'explorer.exe'], capture_output=True, text=True, creationflags=0x08000000)
         subprocess.Popen(['explorer.exe'])
         if r.returncode != 0 and "not found" not in r.stderr.lower():
             return f"Aviso ao matar explorer: {r.stderr.strip()}"
@@ -62,7 +63,7 @@ def optimize_virtual_memory():
     if not is_admin(): return "Aviso: Otimizar Mem????ria Virtual exige Admin."
     try:
         script = "Set-WmiInstance -Class Win32_ComputerSystem -EnableAllPrivileges -Arguments @{AutomaticManagedPagefile=$true}"
-        r = subprocess.run(['powershell', '-Command', script], capture_output=True, text=True)
+        r = subprocess.run(['powershell', '-Command', script], capture_output=True, text=True, creationflags=0x08000000)
         if r.returncode != 0:
             return f"Erro no WMI Pagefile: {r.stderr.strip()}"
         return "Mem????ria Virtual (Pagefile) transferida e otimizada."
@@ -74,29 +75,43 @@ def disable_useless_services():
     logs = []
     for svc in services:
         try:
-            r1 = subprocess.run(['sc', 'config', svc, 'start=', 'disabled'], capture_output=True, text=True)
-            r2 = subprocess.run(['net', 'stop', svc], capture_output=True, text=True)
+            r1 = subprocess.run(['sc', 'config', svc, 'start=', 'disabled'], capture_output=True, text=True, creationflags=0x08000000)
+            r2 = subprocess.run(['net', 'stop', svc], capture_output=True, text=True, creationflags=0x08000000)
             if r1.returncode != 0 and "Access is denied" in r1.stderr:
                 logs.append(f"[sc {svc}] Acesso Negado (Sem Admin)")
             elif r1.returncode != 0 and "OpenService FAILED 1060" not in r1.stdout:
                 logs.append(f"[sc {svc}] {r1.stderr.strip() or r1.stdout.strip()}")
-                
-            if r2.returncode != 0 and "not started" not in r2.stderr.lower() and "n????o foi iniciado" not in r2.stderr.lower():
-                logs.append(f"[net stop {svc}] {r2.stderr.strip() or r2.stdout.strip()}")
-        except Exception as e: 
-            logs.append(f"[Falha API {svc}]: {e}")
             
-    if logs:
-        unique_logs = list(set([log.replace("\n", " ").strip() for log in logs if log.strip()]))
-        return "Servi????os ajustados com avisos:\n    " + "\n    ".join(unique_logs)
-    return "Servi????os de telemetria e SysMain desativados perfeitamente."
+            if r2.returncode != 0 and "not started" not in r2.stderr.lower() and "não foi iniciado" not in r2.stderr.lower():
+                logs.append(f"[net stop {svc}] {r2.stderr.strip() or r2.stdout.strip()}")
+        except Exception as e:
+            logs.append(f"[Falha API {svc}]: {e}")
 
+    try:
+        tasks = ['\Microsoft\Windows\Customer Experience Improvement Program\Consolidator',
+                 '\Microsoft\Windows\Customer Experience Improvement Program\UsbCeip']
+        for t in tasks:
+            subprocess.run(['schtasks', '/Change', '/TN', t, '/Disable'], capture_output=True, creationflags=0x08000000)
 def disable_vbs_and_visuals():
     logs = []
     try:
         with winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity") as key:
             winreg.SetValueEx(key, "Enabled", 0, winreg.REG_DWORD, 0)
     except Exception as e: logs.append(f"VBS falhou: {e}")
+
+    try:
+        with winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects") as key:
+            winreg.SetValueEx(key, "VisualFXSetting", 0, winreg.REG_DWORD, 2)
+    except Exception as e: logs.append(f"Visuais falhou: {e}")
+
+    try:
+        with winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management") as key:
+            winreg.SetValueEx(key, "FeatureSettingsOverride", 0, winreg.REG_DWORD, 3)
+            winreg.SetValueEx(key, "FeatureSettingsOverrideMask", 0, winreg.REG_DWORD, 3)
+    except Exception as e: logs.append(f"Spectre Mitigations: {e}")
+
+    if logs: return "Otimização Visual/VBS/Spectre concluída com erros: " + " | ".join(logs)
+    return "VBS, Efeitos Visuais e Mitigações Spectre desativados (Max CPU)."
     
     try:
         with winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects") as key:
@@ -117,14 +132,6 @@ def optimize_gpu_scheduling():
         games_key_path = r"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games"
         with winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, games_key_path) as key:
             winreg.SetValueEx(key, "GPU Priority", 0, winreg.REG_DWORD, 8)
-            winreg.SetValueEx(key, "Priority", 0, winreg.REG_DWORD, 6)
-            winreg.SetValueEx(key, "Scheduling Category", 0, winreg.REG_SZ, "High")
-            winreg.SetValueEx(key, "SFIO Priority", 0, winreg.REG_SZ, "High")
-    except Exception as e: logs.append(f"MMCSS: {e}")
-        
-    if logs: return "Agendamento GPU aplicado com erros menores: " + " | ".join(logs)
-    return "Agendamento de GPU (HAGS) e MMCSS elevados ao m????ximo."
-
 def optimize_network_latency():
     logs = []
     try:
@@ -132,26 +139,35 @@ def optimize_network_latency():
             winreg.SetValueEx(key, "NetworkThrottlingIndex", 0, winreg.REG_DWORD, 0xffffffff)
             winreg.SetValueEx(key, "SystemResponsiveness", 0, winreg.REG_DWORD, 0)
     except Exception as e: logs.append(f"Throttling Registry: {e}")
-        
+
     try:
-        r1 = subprocess.run(['netsh', 'int', 'tcp', 'set', 'global', 'autotuninglevel=normal'], capture_output=True, text=True)
-        r2 = subprocess.run(['netsh', 'int', 'tcp', 'set', 'global', 'ecncapability=disabled'], capture_output=True, text=True)
+        r1 = subprocess.run(['netsh', 'int', 'tcp', 'set', 'global', 'autotuninglevel=normal'], capture_output=True, text=True, creationflags=0x08000000)
+        r2 = subprocess.run(['netsh', 'int', 'tcp', 'set', 'global', 'ecncapability=disabled'], capture_output=True, text=True, creationflags=0x08000000)
+        
+        # BBR/CUBIC Congestion Provider
+        r3 = subprocess.run(['netsh', 'int', 'tcp', 'set', 'supplemental', 'template=internet', 'congestionprovider=cubic'], capture_output=True, text=True, creationflags=0x08000000)
+        
         if r1.returncode != 0: logs.append(f"TCP AutoTuning: {r1.stderr.strip() or r1.stdout.strip()}")
         if r2.returncode != 0: logs.append(f"TCP ECN: {r2.stderr.strip() or r2.stdout.strip()}")
+        if r3.returncode != 0: logs.append(f"TCP CUBIC: {r3.stderr.strip() or r3.stdout.strip()}")
     except Exception as e: logs.append(f"Netsh API: {e}")
-        
-    if logs: return "Rede otimizada com avisos: " + " | ".join(logs)
-    return "Throttling de rede removido e TCP/IP otimizado (Menor Ping)."
 
+    try:
+        qos_ps = "New-NetQosPolicy -Name 'GamingQoS' -AppPathNameMatchCondition '*.exe' -DSCPAction 46 -NetworkProfile All -PriorityValue8021Action 7 -ErrorAction SilentlyContinue"
+        subprocess.run(['powershell', '-Command', qos_ps], capture_output=True, creationflags=0x08000000)
+    except Exception as e: logs.append(f"QoS falhou: {e}")
+
+    if logs: return "Rede otimizada com avisos: " + " | ".join(logs)
+    return "Throttling de rede removido e TCP/IP/CUBIC/QoS otimizados (Ping)."
 def disable_bloat_and_compression():
     logs = []
     try:
-        r = subprocess.run(['powershell', '-Command', 'Disable-MMAgent -mc'], capture_output=True, text=True)
+        r = subprocess.run(['powershell', '-Command', 'Disable-MMAgent -mc'], capture_output=True, text=True, creationflags=0x08000000)
         if r.returncode != 0: logs.append(f"MMAgent: {r.stderr.strip()}")
     except Exception as e: logs.append(f"MMAgent API: {e}")
         
     try:
-        r = subprocess.run(['powercfg', '/h', 'off'], capture_output=True, text=True)
+        r = subprocess.run(['powercfg', '/h', 'off'], capture_output=True, text=True, creationflags=0x08000000)
         if r.returncode != 0: logs.append(f"Hiberna????????o: {r.stderr.strip() or r.stdout.strip()}")
     except Exception as e: logs.append(f"PowerCfg API: {e}")
         
@@ -231,7 +247,7 @@ def clean_temp_folders():
 
 def flush_dns():
     try:
-        r = subprocess.run(['ipconfig', '/flushdns'], capture_output=True, text=True)
+        r = subprocess.run(['ipconfig', '/flushdns'], capture_output=True, text=True, creationflags=0x08000000)
         if r.returncode != 0:
             return f"Aviso DNS: {r.stderr.strip() or r.stdout.strip()}"
         return 'Cache DNS limpo.'
@@ -239,7 +255,7 @@ def flush_dns():
 
 def optimize_drive():
     try:
-        r = subprocess.run(['defrag', 'C:', '/O'], capture_output=True, text=True)
+        r = subprocess.run(['defrag', 'C:', '/O'], capture_output=True, text=True, creationflags=0x08000000)
         if r.returncode != 0:
             return f"Aviso Disco: {r.stderr.strip() or r.stdout.strip()}"
         return 'Disco otimizado (TRIM/Defrag).'
@@ -248,21 +264,25 @@ def optimize_drive():
 def clear_event_logs():
     if not is_admin(): return "Aviso: Limpar logs exige Admin."
     try:
-        r = subprocess.run(['wevtutil', 'el'], capture_output=True, text=True)
+        r = subprocess.run(['wevtutil', 'el'], capture_output=True, text=True, creationflags=0x08000000)
         if r.returncode != 0:
             return f"Falha ao listar logs: {r.stderr.strip()}"
-            
-        logs = r.stdout.splitlines()
+
+        logs = [log.strip() for log in r.stdout.splitlines() if log.strip()]
+        
+        def _clear_log(log_name):
+            r2 = subprocess.run(['wevtutil', 'cl', log_name], capture_output=True, text=True, creationflags=0x08000000)
+            return r2.returncode != 0
+
         errors = 0
-        for log in logs:
-            r2 = subprocess.run(['wevtutil', 'cl', log.strip()], capture_output=True, text=True)
-            if r2.returncode != 0: errors += 1
-            
+        with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
+            results = executor.map(_clear_log, logs)
+            errors = sum(results)
+
         msg = "Logs de eventos limpos."
         if errors > 0: msg += f" (Falhou ao limpar {errors} logs restritos)."
         return msg
     except Exception as e: return f"Erro fatal ao limpar logs: {e}"
-
 def apply_performance_tweaks():
     if not is_admin(): return "Aviso: Tweaks de registro exigem Admin."
     logs = []
@@ -275,12 +295,16 @@ def apply_performance_tweaks():
         with winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Policies\Microsoft\Windows\DataCollection") as key:
             winreg.SetValueEx(key, "AllowTelemetry", 0, winreg.REG_DWORD, 0)
     except Exception as e: logs.append(f"Reg Tweaks: {e}")
-        
+
     try:
-        r = subprocess.run(['powercfg', '/setactive', '8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c'], capture_output=True, text=True)
+        r = subprocess.run(['powercfg', '/setactive', '8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c'], capture_output=True, text=True, creationflags=0x08000000)
+        subprocess.run(['powercfg', '-setacvalueindex', 'scheme_current', 'sub_processor', '0cc5b647-c1df-4637-891a-dec35c318583', '100'], capture_output=True, text=True, creationflags=0x08000000)
+        subprocess.run(['powercfg', '-setactive', 'scheme_current'], capture_output=True, text=True, creationflags=0x08000000)
         if r.returncode != 0: logs.append(f"Powercfg: {r.stderr.strip() or r.stdout.strip()}")
     except Exception as e: logs.append(f"Powercfg API: {e}")
-        
+
+    if logs: return "Ajustes de registro aplicados com avisos: " + " | ".join(logs)
+    return "Ajustes de registro, energia e Core Unparking aplicados."
     if logs: return "Ajustes de registro aplicados com avisos: " + " | ".join(logs)
     return "Ajustes de registro e energia aplicados."
 
@@ -288,8 +312,8 @@ def reset_network():
     if not is_admin(): return "Aviso: Reset de rede exige Admin."
     logs = []
     try:
-        r1 = subprocess.run(['netsh', 'winsock', 'reset'], capture_output=True, text=True)
-        r2 = subprocess.run(['netsh', 'int', 'ip', 'reset'], capture_output=True, text=True)
+        r1 = subprocess.run(['netsh', 'winsock', 'reset'], capture_output=True, text=True, creationflags=0x08000000)
+        r2 = subprocess.run(['netsh', 'int', 'ip', 'reset'], capture_output=True, text=True, creationflags=0x08000000)
         if r1.returncode != 0: logs.append(f"Winsock: {r1.stderr.strip() or r1.stdout.strip()}")
         if r2.returncode != 0: logs.append(f"IP: {r2.stderr.strip() or r2.stdout.strip()}")
     except Exception as e: logs.append(f"Net API: {e}")
@@ -298,44 +322,30 @@ def reset_network():
     return "Protocolos de rede resetados sem erros."
 
 def optimize_system(mode="quick"):
-    res = []
+    tasks = []
     if mode == "quick":
-        res = [clean_ram(), clean_temp_folders(), flush_dns()]
+        tasks = [clean_ram, clean_temp_folders, flush_dns]
     elif mode == "advanced":
-        res = [clean_ram(), clean_temp_folders(), flush_dns(), optimize_drive()]
+        tasks = [clean_ram, clean_temp_folders, flush_dns, optimize_drive]
     elif mode == "ultimate":
-        res = [
-            clean_ram(), 
-            clean_temp_folders(), 
-            flush_dns(), 
-            optimize_drive(), 
-            clear_event_logs(), 
-            apply_performance_tweaks(),
-            reset_network()
-        ]
+        tasks = [clean_ram, clean_temp_folders, flush_dns, optimize_drive,
+                  clear_event_logs, apply_performance_tweaks, reset_network]
     elif mode == "ram_boost":
-        res = [
-            kill_memory_hogs(),
-            clean_ram(),
-            restart_explorer(),
-            optimize_virtual_memory()
-        ]
+        tasks = [kill_memory_hogs, clean_ram, restart_explorer, optimize_virtual_memory]
     elif mode == "god_mode" or mode == "all_in_one":
-        res = [
-            clean_ram(),
-            clear_standby_and_shaders(),
-            clean_temp_folders(),
-            flush_dns(),
-            optimize_network_latency(),
-            optimize_drive(),
-            clear_event_logs(),
-            apply_performance_tweaks(),
-            disable_useless_services(),
-            disable_vbs_and_visuals(),
-            optimize_gpu_scheduling(),
-            disable_bloat_and_compression()
-        ]
-    return '\n'.join(res)
+        tasks = [clean_ram, clear_standby_and_shaders, clean_temp_folders, flush_dns,
+                  optimize_network_latency, optimize_drive, clear_event_logs,
+                  apply_performance_tweaks, disable_useless_services, disable_vbs_and_visuals,
+                  optimize_gpu_scheduling, disable_bloat_and_compression]
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+        futures = {executor.submit(t): t for t in tasks}
+        for future in concurrent.futures.as_completed(futures):
+            try:
+                res = future.result()
+                if res: yield res
+            except Exception as e:
+                yield f"Erro na tarefa: {e}"
 
 
 
@@ -566,8 +576,16 @@ class WinRAMApp(ctk.CTk):
         
         self.btn_god = make_mode_card(
             self.modes_panel, 2, 1,
-            "????", "GOD MODE", "VBS, GPU, TCP, MMCSS, IAs e mais.",
+            "⚡", "GOD MODE", "VBS, GPU, TCP, MMCSS, IAs e mais.",
             Theme.GOD_FG, Theme.GOD_HV, "god_mode")
+
+        self.daemon_var = ctk.StringVar(value=self.check_daemon_status())
+        self.switch_daemon = ctk.CTkSwitch(
+            self.modes_panel, text="Auto RAM Cleaner (Background)", command=self.toggle_daemon,
+            variable=self.daemon_var, onvalue="on", offvalue="off",
+            font=ctk.CTkFont(family="Segoe UI", size=11, weight="bold"),
+            progress_color=Theme.ACCENT_GREEN)
+        self.switch_daemon.grid(row=3, column=0, columnspan=2, pady=(10, 0))
         
         # ?????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????
         #  CONSOLE (Parte inferior)
@@ -667,34 +685,75 @@ class WinRAMApp(ctk.CTk):
     def run_task(self, mode):
         try:
             time.sleep(0.5)
-            res = optimize_system(mode=mode)
-            lines = res.split("\n")
-            
             self.console_text.configure(state="normal")
             self.console_text.delete("1.0", "end")
-            self.console_text.insert("end", "  ????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????\n")
-            self.console_text.insert("end", "  ???   ???  OTIMIZA????O CONCLU??DA COM SUCESSO   ???\n")
-            self.console_text.insert("end", "  ????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????\n\n")
-            for line in lines:
-                if "Erro" in line or "Aviso" in line or "Acesso Negado" in line or "Falhou" in line or "falhou" in line:
-                    self.console_text.insert("end", f"  [!] {line}\n", "error_tag")
-                else:
-                    self.console_text.insert("end", f"  ???  {line}\n")
-                    
-            self.console_text.tag_config("error_tag", foreground=Theme.ACCENT_ORANGE)
+            self.console_text.insert("end", "  ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════\n")
+            self.console_text.insert("end", "  ⚡   🔥  OTIMIZAÇÃO EM ANDAMENTO   🔥\n")
+            self.console_text.insert("end", "  ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════\n\n")
+            self.console_text.configure(state="disabled")
+
+            for res in optimize_system(mode=mode):
+                lines = res.split("\n")
+                self.console_text.configure(state="normal")
+                for line in lines:
+                    if "Erro" in line or "Aviso" in line or "Acesso Negado" in line or "Falhou" in line or "falhou" in line:
+                        self.console_text.insert("end", f"  [!] {line}\n", "error_tag")
+                    else:
+                        self.console_text.insert("end", f"  ✔️  {line}\n")
+                self.console_text.tag_config("error_tag", foreground=Theme.ACCENT_ORANGE)
+                self.console_text.configure(state="disabled")
+                self.console_text.see("end")
+
+            self.console_text.configure(state="normal")
+            self.console_text.insert("end", "\n  ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════\n")
+            self.console_text.insert("end", "  ✔️   🔥  OTIMIZAÇÃO CONCLUÍDA COM SUCESSO   🔥\n")
+            self.console_text.insert("end", "  ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════\n\n")
             self.console_text.configure(state="disabled")
             self.console_text.see("end")
-            
-            self.status_dot.configure(text="???  CONCLU??DO", text_color=Theme.ACCENT_GREEN)
+
+            self.status_dot.configure(text="🟢  CONCLUÍDO", text_color=Theme.ACCENT_GREEN)
         except Exception as e:
             self.console_text.configure(state="normal")
             self.console_text.delete("1.0", "end")
-            self.console_text.insert("end", f"  ???  ERRO CR??TICO NA APLICA????O: {e}\n", "error_critical")
+            self.console_text.insert("end", f"  ❌  ERRO CRÍTICO NA APLICAÇÃO: {e}\n", "error_critical")
             self.console_text.tag_config("error_critical", foreground=Theme.ACCENT_RED)
             self.console_text.configure(state="disabled")
-            self.status_dot.configure(text="???  ERRO", text_color=Theme.ACCENT_RED)
+            self.status_dot.configure(text="🔴  ERRO", text_color=Theme.ACCENT_RED)
         finally:
             self.set_buttons_state("normal")
+
+    def toggle_daemon(self):
+        key_path = r"Software\Microsoft\Windows\CurrentVersion\Run"
+        app_name = "WinRAM_AutoCleaner"
+        try:
+            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_path, 0, winreg.KEY_ALL_ACCESS)
+            if self.daemon_var.get() == "on":
+                script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "winram_daemon.pyw")
+                pythonw_path = sys.executable.replace("python.exe", "pythonw.exe")
+                if not os.path.exists(pythonw_path):
+                    pythonw_path = "pythonw.exe"
+                winreg.SetValueEx(key, app_name, 0, winreg.REG_SZ, f'"{pythonw_path}" "{script_path}"')
+                subprocess.Popen([pythonw_path, script_path], creationflags=0x08000000)
+            else:
+                try:
+                    winreg.DeleteValue(key, app_name)
+                    subprocess.run('wmic process where "commandline like \'%winram_daemon.pyw%\'" call terminate', capture_output=True, creationflags=0x08000000)
+                except:
+                    pass
+            winreg.CloseKey(key)
+        except Exception as e:
+            print("Daemon error:", e)
+
+    def check_daemon_status(self):
+        key_path = r"Software\Microsoft\Windows\CurrentVersion\Run"
+        app_name = "WinRAM_AutoCleaner"
+        try:
+            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_path, 0, winreg.KEY_READ)
+            winreg.QueryValueEx(key, app_name)
+            winreg.CloseKey(key)
+            return "on"
+        except:
+            return "off"
 
 
 if __name__ == "__main__":
