@@ -173,6 +173,19 @@ def disable_bloat_and_compression():
         r = subprocess.run(['powershell', '-Command', 'Disable-MMAgent -mc'], capture_output=True, text=True, creationflags=0x08000000)
         if r.returncode != 0: logs.append(f"MMAgent: {r.stderr.strip()}")
     except Exception as e: logs.append(f"MMAgent API: {e}")
+    
+    try:
+        bloat_apps = [
+            "Microsoft.BingNews",
+            "Microsoft.MicrosoftSolitaireCollection",
+            "Microsoft.Todos",
+            "Microsoft.SkypeApp",
+            "Microsoft.ZuneVideo"
+        ]
+        for app in bloat_apps:
+            cmd = f'Get-AppxPackage *{app}* | Remove-AppxPackage'
+            subprocess.run(['powershell', '-Command', cmd], creationflags=0x08000000)
+    except Exception as e: logs.append(f"Bloatware API: {e}")
         
     try:
         r = subprocess.run(['powercfg', '/h', 'off'], capture_output=True, text=True, creationflags=0x08000000)
@@ -187,7 +200,7 @@ def disable_bloat_and_compression():
     except Exception as e: logs.append(f"Registry Bloat: {e}")
             
     if logs: return "Bloatwares bloqueados com avisos: " + " | ".join(logs)
-    return "Compressão de RAM, Fast Startup e IAs em segundo plano bloqueados."
+    return "Compressão de RAM, Fast Startup, Bloatwares e IAs bloqueados."
 
 def clear_standby_and_shaders():
     results = []
