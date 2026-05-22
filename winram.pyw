@@ -355,6 +355,17 @@ def apply_performance_tweaks():
         with winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Policies\Microsoft\Windows\DataCollection") as key: winreg.SetValueEx(key, "AllowTelemetry", 0, winreg.REG_DWORD, 0)
     _safe_reg(t3)
 
+    # Disable MPO (Multi-Plane Overlay) to fix stuttering/black screens on AMD/NVIDIA
+    def t_mpo():
+        with winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows\Dwm") as key: winreg.SetValueEx(key, "OverlayTestMode", 0, winreg.REG_DWORD, 5)
+    _safe_reg(t_mpo)
+
+    # Disable GameDVR overhead
+    def t_gamedvr():
+        with winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"System\GameConfigStore") as key: winreg.SetValueEx(key, "GameDVR_Enabled", 0, winreg.REG_DWORD, 0)
+        with winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Policies\Microsoft\Windows\GameDVR") as key: winreg.SetValueEx(key, "AllowGameDVR", 0, winreg.REG_DWORD, 0)
+    _safe_reg(t_gamedvr)
+
     def t4():
         with winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize") as key: winreg.SetValueEx(key, "EnableTransparency", 0, winreg.REG_DWORD, 0)
     _safe_reg(t4)
