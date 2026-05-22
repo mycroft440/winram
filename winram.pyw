@@ -176,7 +176,8 @@ def disable_bloat_and_compression():
     logs = []
     try:
         r = subprocess.run(['powershell', '-Command', 'Disable-MMAgent -mc'], capture_output=True, text=True, creationflags=0x08000000)
-        if r.returncode != 0: logs.append(f"MMAgent: {r.stderr.strip()}")
+        if r.returncode != 0 and "não pode ser iniciado" not in r.stderr and "cannot be started" not in r.stderr and "nÆo pode ser iniciado" not in r.stderr:
+            logs.append(f"MMAgent: {r.stderr.strip()}")
     except Exception as e: logs.append(f"MMAgent API: {e}")
     
     try:
@@ -312,29 +313,41 @@ def clear_event_logs():
 def apply_performance_tweaks():
     if not is_admin(): return "Aviso: Tweaks de registro exigem Admin."
     logs = []
-    try:
-        with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile", 0, winreg.KEY_SET_VALUE) as key:
-            winreg.SetValueEx(key, "SystemResponsiveness", 0, winreg.REG_DWORD, 1)
+    def _safe_reg(func):
+        try: func()
+        except: pass
+
+    def t1():
+        with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile", 0, winreg.KEY_SET_VALUE) as key: winreg.SetValueEx(key, "SystemResponsiveness", 0, winreg.REG_DWORD, 1)
+    _safe_reg(t1)
+
+    def t2():
         with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Control Panel\Desktop", 0, winreg.KEY_SET_VALUE) as key:
             winreg.SetValueEx(key, "MenuShowDelay", 0, winreg.REG_SZ, "50")
             winreg.SetValueEx(key, "AutoEndTasks", 0, winreg.REG_SZ, "1")
-        with winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Policies\Microsoft\Windows\DataCollection") as key:
-            winreg.SetValueEx(key, "AllowTelemetry", 0, winreg.REG_DWORD, 0)
-        
-        # Desativar Transparencia, Aero Peek e Animações
-        with winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize") as key:
-            winreg.SetValueEx(key, "EnableTransparency", 0, winreg.REG_DWORD, 0)
-        with winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\DWM") as key:
-            winreg.SetValueEx(key, "EnableAeroPeek", 0, winreg.REG_DWORD, 0)
-        with winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects") as key:
-            winreg.SetValueEx(key, "VisualFXSetting", 0, winreg.REG_DWORD, 3)
+    _safe_reg(t2)
 
-        # Barra de Tarefas (Widgets e Chat)
+    def t3():
+        with winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Policies\Microsoft\Windows\DataCollection") as key: winreg.SetValueEx(key, "AllowTelemetry", 0, winreg.REG_DWORD, 0)
+    _safe_reg(t3)
+
+    def t4():
+        with winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize") as key: winreg.SetValueEx(key, "EnableTransparency", 0, winreg.REG_DWORD, 0)
+    _safe_reg(t4)
+
+    def t5():
+        with winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\DWM") as key: winreg.SetValueEx(key, "EnableAeroPeek", 0, winreg.REG_DWORD, 0)
+    _safe_reg(t5)
+
+    def t6():
+        with winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects") as key: winreg.SetValueEx(key, "VisualFXSetting", 0, winreg.REG_DWORD, 3)
+    _safe_reg(t6)
+
+    def t7():
         with winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced") as key:
             winreg.SetValueEx(key, "TaskbarDa", 0, winreg.REG_DWORD, 0)
             winreg.SetValueEx(key, "TaskbarMn", 0, winreg.REG_DWORD, 0)
-
-    except Exception as e: logs.append(f"Reg Tweaks: {e}")
+    _safe_reg(t7)
 
     try:
         r = subprocess.run(['powercfg', '/setactive', '8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c'], capture_output=True, text=True, creationflags=0x08000000)
