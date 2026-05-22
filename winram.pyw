@@ -375,7 +375,16 @@ def apply_performance_tweaks():
 
     try:
         r = subprocess.run(['powercfg', '/setactive', '8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c'], capture_output=True, text=True, creationflags=0x08000000)
+        # Core Unparking
         subprocess.run(['powercfg', '-setacvalueindex', 'scheme_current', 'sub_processor', '0cc5b647-c1df-4637-891a-dec35c318583', '100'], capture_output=True, text=True, creationflags=0x08000000)
+        # System Cooling Policy (1 = Active)
+        subprocess.run(['powercfg', '-setacvalueindex', 'scheme_current', 'sub_processor', '94d3a615-a899-4ac5-ae2b-e4d8f634367f', '1'], creationflags=0x08000000)
+        # Wireless Adapter Settings (0 = Max Performance)
+        subprocess.run(['powercfg', '-setacvalueindex', 'scheme_current', '19cbb8fa-5279-450e-9fac-8a3d5fedd0c1', '12bbebe6-58d6-4636-95bb-3217ef867c1a', '0'], creationflags=0x08000000)
+        # USB Selective Suspend (0 = Disabled)
+        subprocess.run(['powercfg', '-setacvalueindex', 'scheme_current', '2a737441-1930-4402-8d77-b2bebba308a3', '48e6b7a6-50f5-4782-a5d4-53bb8f07e226', '0'], creationflags=0x08000000)
+        # PCI Express Link State Power Management (0 = Off)
+        subprocess.run(['powercfg', '-setacvalueindex', 'scheme_current', '501a4d13-42af-4429-9fd1-a8218c268e20', 'ee12f906-d277-404b-b6da-e5fa1a576df5', '0'], creationflags=0x08000000)
         subprocess.run(['powercfg', '-setactive', 'scheme_current'], capture_output=True, text=True, creationflags=0x08000000)
         if r.returncode != 0: logs.append(f"Powercfg: {r.stderr.strip() or r.stdout.strip()}")
     except Exception as e: logs.append(f"Powercfg API: {e}")
