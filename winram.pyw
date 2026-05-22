@@ -575,7 +575,7 @@ class WinRAMApp(ctk.CTk):
         super().__init__()
 
         self.title("WinRAM Ultimate v2.0")
-        self.geometry("1000x750")
+        self.geometry("900x600")
         self.resizable(False, False)
         self.configure(fg_color=Theme.BG_DARK)
         
@@ -817,7 +817,7 @@ class WinRAMApp(ctk.CTk):
         # --------------------------------------------------------------------------------
         self.console_outer = ctk.CTkFrame(self.main_frame, fg_color=Theme.BG_CARD, 
                                            corner_radius=14, border_width=1, border_color=Theme.BORDER,
-                                           height=180)
+                                           height=130)
         self.console_outer.pack(fill="x", padx=30, pady=(15, 20))
         self.console_outer.pack_propagate(False)
         
@@ -835,7 +835,7 @@ class WinRAMApp(ctk.CTk):
         # Console Text
         self.console_text = ctk.CTkTextbox(self.console_outer, font=self.font_console,
                                             fg_color=Theme.BG_DARK, text_color=Theme.ACCENT_GREEN,
-                                            corner_radius=8, border_width=0, height=120,
+                                            corner_radius=8, border_width=0, height=90,
                                             activate_scrollbars=True, wrap="word")
         self.console_text.pack(fill="both", expand=True, padx=12, pady=(8, 12))
         self.console_text.insert("end", "  > Sistema pronto. Selecione um modo de otimização.\n")
