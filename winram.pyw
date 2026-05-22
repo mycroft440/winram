@@ -62,10 +62,15 @@ def restart_explorer():
 def optimize_virtual_memory():
     if not is_admin(): return "Aviso: Otimizar Memória Virtual exige Admin."
     try:
-        script = "Set-WmiInstance -Class Win32_ComputerSystem -EnableAllPrivileges -Arguments @{AutomaticManagedPagefile=$true}"
+        # Usa CIM Instance em vez de WMI para evitar erro "Provider is not capable"
+        script = "Get-CimInstance -ClassName Win32_ComputerSystem | Set-CimInstance -Property @{AutomaticManagedPagefile=$True}"
         r = subprocess.run(['powershell', '-Command', script], capture_output=True, text=True, creationflags=0x08000000)
         if r.returncode != 0:
-            return f"Erro no WMI Pagefile: {r.stderr.strip()}"
+            # Fallback para o metodo WMI tradicional
+            script_fb = "$sys = Get-WmiObject Win32_ComputerSystem -EnableAllPrivileges; $sys.AutomaticManagedPagefile = $true; $sys.Put()"
+            r_fb = subprocess.run(['powershell', '-Command', script_fb], capture_output=True, text=True, creationflags=0x08000000)
+            if r_fb.returncode != 0:
+                return f"Erro ao configurar Pagefile: {r_fb.stderr.strip()}"
         return "Memória Virtual (Pagefile) transferida e otimizada."
     except Exception as e:
         return f"Erro crítico ao configurar Memória Virtual: {e}"
