@@ -475,6 +475,61 @@ ctk.set_default_color_theme("blue")
 # --------------------------------------------------------------------------------
 #  PALETA DE CORES PREMIUM
 # --------------------------------------------------------------------------------
+def check_states():
+    """Retorna um dicionario com o estado de otimizacao das funcoes trackeaveis"""
+    states = {}
+    
+    # 1. apply_performance_tweaks (MPO)
+    try:
+        with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows\Dwm") as key:
+            val, _ = winreg.QueryValueEx(key, "OverlayTestMode")
+            states["apply_performance_tweaks"] = (val == 5)
+    except: states["apply_performance_tweaks"] = False
+
+    # 2. optimize_gpu_scheduling
+    try:
+        with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\GraphicsDrivers") as key:
+            val, _ = winreg.QueryValueEx(key, "HwSchMode")
+            states["optimize_gpu_scheduling"] = (val == 2)
+    except: states["optimize_gpu_scheduling"] = False
+
+    # 3. disable_vbs_and_visuals
+    try:
+        with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management") as key:
+            val, _ = winreg.QueryValueEx(key, "FeatureSettingsOverride")
+            states["disable_vbs_and_visuals"] = (val == 3)
+    except: states["disable_vbs_and_visuals"] = False
+
+    # 4. enable_storage_sense_and_boot
+    try:
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\StorageSense\Parameters\StoragePolicy") as key:
+            val, _ = winreg.QueryValueEx(key, "01")
+            states["enable_storage_sense_and_boot"] = (val == 1)
+    except: states["enable_storage_sense_and_boot"] = False
+
+    # 5. disable_useless_services (SysMain)
+    try:
+        r = subprocess.run(['sc', 'query', 'SysMain'], capture_output=True, text=True, creationflags=0x08000000)
+        states["disable_useless_services"] = ("1060" in r.stdout or "STOPPED" in r.stdout)
+    except: states["disable_useless_services"] = False
+
+    # 6. optimize_amd_gpu
+    try:
+        ps_script = r'''
+        $paths = Get-ChildItem -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0*" -ErrorAction SilentlyContinue
+        $is_opt = $false
+        foreach ($p in $paths) {
+            $ulps = Get-ItemProperty -Path $p.PSPath -Name "EnableUlps" -ErrorAction SilentlyContinue
+            if ($null -ne $ulps -and $ulps.EnableUlps -eq 0) { $is_opt = $true; break }
+        }
+        Write-Output $is_opt
+        '''
+        r = subprocess.run(['powershell', '-Command', ps_script], capture_output=True, text=True, creationflags=0x08000000)
+        states["optimize_amd_gpu"] = ("True" in r.stdout)
+    except: states["optimize_amd_gpu"] = False
+
+    return states
+
 class Theme:
     BG_DARK      = "#0a0a0f"
     BG_CARD      = "#12121a"
@@ -669,6 +724,7 @@ class WinRAMApp(ctk.CTk):
         tab_avancado= self.tabview.add("⚡ Pro")
 
         self.all_action_btns = []
+        self.action_btns_dict = {}
 
         def make_action_btn(parent, icon, label, func_name, fg=Theme.QUICK_FG, hv=Theme.QUICK_HV):
             btn = ctk.CTkButton(parent, text=f"{icon}  {label}", height=34, corner_radius=8,
@@ -677,6 +733,7 @@ class WinRAMApp(ctk.CTk):
                                command=lambda fn=func_name: self.start_single(fn))
             btn.pack(fill="x", padx=10, pady=3)
             self.all_action_btns.append(btn)
+            self.action_btns_dict[func_name] = btn
             return btn
 
         # -- Aba Limpeza --
@@ -767,6 +824,7 @@ class WinRAMApp(ctk.CTk):
         
         # ------ Iniciar Loop de Monitoramento ---
         self.update_stats()
+        self.refresh_button_states()
 
     # --------------------------------------------------------------------------------
     #  MONITORAMENTO EM TEMPO REAL
@@ -823,6 +881,19 @@ class WinRAMApp(ctk.CTk):
         
         threading.Thread(target=self.run_task, args=(mode,), daemon=True).start()
 
+    def refresh_button_states(self):
+        def _bg_check():
+            states = check_states()
+            for func_name, is_opt in states.items():
+                if is_opt and func_name in self.action_btns_dict:
+                    btn = self.action_btns_dict[func_name]
+                    # Update button to show it's optimized
+                    btn.configure(fg_color=Theme.ACCENT_GREEN, hover_color="#1b5e20", text_color="#ffffff")
+                    old_text = btn.cget("text")
+                    if "✔️" not in old_text:
+                        btn.configure(text=old_text.replace(old_text.split()[0], "✔️"))
+        threading.Thread(target=_bg_check, daemon=True).start()
+
     def set_buttons_state(self, state):
         self.btn_ram_boost.configure(state=state)
         self.btn_all_in.configure(state=state)
@@ -873,6 +944,7 @@ class WinRAMApp(ctk.CTk):
                 self.status_dot.configure(text="\U0001f534  ERRO", text_color=Theme.ACCENT_RED)
             finally:
                 self.set_buttons_state("normal")
+                self.refresh_button_states()
         threading.Thread(target=_run, daemon=True).start()
 
     def run_task(self, mode):
