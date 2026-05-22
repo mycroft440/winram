@@ -139,6 +139,7 @@ def optimize_amd_gpu():
             $val = Get-ItemProperty -Path $p.PSPath -Name "EnableUlps" -ErrorAction SilentlyContinue
             if ($null -ne $val) {
                 Set-ItemProperty -Path $p.PSPath -Name "EnableUlps" -Value 0 -Type DWord -ErrorAction SilentlyContinue
+                Set-ItemProperty -Path $p.PSPath -Name "PP_SclkDeepSleepDisable" -Value 1 -Type DWord -ErrorAction SilentlyContinue
                 $disabled++
             }
         }
