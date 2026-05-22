@@ -129,6 +129,29 @@ def disable_vbs_and_visuals():
     if logs: return "Otimização Visual/VBS concluída com erros: " + " | ".join(logs)
     return "VBS (Virtualization) e Efeitos Visuais otimizados."
 
+def optimize_amd_gpu():
+    if not is_admin(): return "Aviso: Otimizar AMD GPU exige Admin."
+    try:
+        ps_script = r'''
+        $paths = Get-ChildItem -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0*" -ErrorAction SilentlyContinue
+        $disabled = 0
+        foreach ($p in $paths) {
+            $val = Get-ItemProperty -Path $p.PSPath -Name "EnableUlps" -ErrorAction SilentlyContinue
+            if ($null -ne $val) {
+                Set-ItemProperty -Path $p.PSPath -Name "EnableUlps" -Value 0 -Type DWord -ErrorAction SilentlyContinue
+                $disabled++
+            }
+        }
+        Write-Output $disabled
+        '''
+        r = subprocess.run(['powershell', '-Command', ps_script], capture_output=True, text=True, creationflags=0x08000000)
+        count = int(r.stdout.strip()) if r.stdout.strip().isdigit() else 0
+        if count > 0:
+            return f"AMD ULPS desativado em {count} placa(s). FPS e Stuttering otimizados!"
+        return "Nenhuma placa AMD com ULPS encontrada. Tudo certo."
+    except Exception as e:
+        return f"Erro ao tentar otimizar AMD GPU: {e}"
+
 def optimize_gpu_scheduling():
     logs = []
     try:
@@ -658,6 +681,7 @@ class WinRAMApp(ctk.CTk):
 
         # -- Aba Pro --
         make_action_btn(tab_avancado, "🎮", "GPU Scheduling (Hardware)", "optimize_gpu_scheduling", fg=Theme.GOD_FG, hv=Theme.GOD_HV)
+        make_action_btn(tab_avancado, "🔴", "Otimizar AMD GPU (ULPS)", "optimize_amd_gpu", fg="#b71c1c", hv="#d32f2f")
         make_action_btn(tab_avancado, "💿", "Otimizar Drive (TRIM/Defrag)", "optimize_drive", fg=Theme.GOD_FG, hv=Theme.GOD_HV)
         make_action_btn(tab_avancado, "🔧", "Reparar Sistema (SFC/DISM)", "repair_system", fg=Theme.ULT_FG, hv=Theme.ULT_HV)
 
@@ -797,6 +821,7 @@ class WinRAMApp(ctk.CTk):
             "restart_explorer": restart_explorer, "optimize_virtual_memory": optimize_virtual_memory,
             "flush_dns": flush_dns, "optimize_network_latency": optimize_network_latency,
             "reset_network": reset_network, "optimize_gpu_scheduling": optimize_gpu_scheduling,
+            "optimize_amd_gpu": optimize_amd_gpu,
             "optimize_drive": optimize_drive, "repair_system": repair_system,
         }
         func = func_map.get(func_name)
