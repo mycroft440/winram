@@ -456,7 +456,7 @@ def optimize_system(mode="quick"):
         tasks = [clean_ram, clear_standby_and_shaders, clean_temp_folders, flush_dns,
                   optimize_network_latency, optimize_drive, clear_event_logs,
                   apply_performance_tweaks, disable_useless_services, disable_vbs_and_visuals,
-                  optimize_gpu_scheduling, disable_bloat_and_compression, enable_storage_sense_and_boot, repair_system]
+                  optimize_gpu_scheduling, optimize_amd_gpu, disable_bloat_and_compression, enable_storage_sense_and_boot, repair_system]
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
         futures = {executor.submit(t): t for t in tasks}
