@@ -581,69 +581,97 @@ class WinRAMApp(ctk.CTk):
             command=lambda: self.start_opt("ram_boost"))
         self.btn_ram_boost.pack(padx=20, pady=(10, 18), fill="x")
         
-        # ------ PAINEL DIREITO: Modos de Otimização 
+        # ------ PAINEL DIREITO: Sistema de Abas com Funcoes Individuais ---
         self.modes_panel = ctk.CTkFrame(self.center_frame, fg_color="transparent")
         self.modes_panel.grid(row=0, column=1, sticky="nsew", padx=(10, 0), pady=0)
-        self.modes_panel.grid_rowconfigure((0, 1, 2), weight=1)
-        self.modes_panel.grid_columnconfigure((0, 1), weight=1)
-        
-        # Botao Gigante (ALL IN ONE)
+
+        # Botao Gigante (ALL IN ONE) no topo
         self.btn_all_in = ctk.CTkButton(
-            self.modes_panel, text=" 1-CLICK OTIMIZAO TOTAL\n(Executa Todas as Funes)", height=60,
+            self.modes_panel, text="🚀  1-CLICK OTIMIZAÇÃO TOTAL  (Executa Todas as Funções)", height=44,
             fg_color=Theme.ALL_IN_FG, hover_color=Theme.ALL_IN_HV, text_color="#ffffff",
-            font=ctk.CTkFont(family="Segoe UI", size=16, weight="bold"), corner_radius=14,
+            font=ctk.CTkFont(family="Segoe UI", size=14, weight="bold"), corner_radius=12,
             command=lambda: self.start_opt("all_in_one"))
-        self.btn_all_in.grid(row=0, column=0, columnspan=2, sticky="nsew", padx=5, pady=(5, 10))
+        self.btn_all_in.pack(fill="x", padx=5, pady=(5, 8))
 
-        # ------ Card Builder ---
-        def make_mode_card(parent, row, col, icon, title, desc, fg, hv, mode):
-            card = ctk.CTkFrame(parent, fg_color=Theme.BG_CARD, corner_radius=14,
-                                border_width=1, border_color=Theme.BORDER)
-            card.grid(row=row, column=col, sticky="nsew", padx=5, pady=5)
-            card.grid_propagate(False)
-            
-            inner = ctk.CTkFrame(card, fg_color="transparent")
-            inner.pack(expand=True, fill="both", padx=16, pady=10)
-            
-            ctk.CTkLabel(inner, text=icon, font=ctk.CTkFont(size=24)).pack(anchor="w")
-            ctk.CTkLabel(inner, text=title, font=self.font_btn, 
-                        text_color=Theme.TEXT_PRIMARY).pack(anchor="w", pady=(2, 0))
-            ctk.CTkLabel(inner, text=desc, font=self.font_btn_sub, 
-                        text_color=Theme.TEXT_SECONDARY, wraplength=180, justify="left").pack(anchor="w")
-            
-            btn = ctk.CTkButton(inner, text="EXECUTAR", height=28, corner_radius=8,
-                               fg_color=fg, hover_color=hv, font=self.font_btn_sub,
-                               command=lambda: self.start_opt(mode))
-            btn.pack(fill="x", pady=(8, 0))
+        # Tabview com categorias
+        self.tabview = ctk.CTkTabview(self.modes_panel, fg_color=Theme.BG_CARD,
+                                       segmented_button_fg_color=Theme.BG_CARD_ALT,
+                                       segmented_button_selected_color=Theme.ACCENT_BLUE,
+                                       segmented_button_unselected_color=Theme.BG_CARD_ALT,
+                                       corner_radius=14, border_width=1, border_color=Theme.BORDER)
+        self.tabview.pack(fill="both", expand=True, padx=5, pady=(0, 5))
+
+        tab_limpeza = self.tabview.add("🧹 Limpeza")
+        tab_sistema = self.tabview.add("⚙ Sistema")
+        tab_rede    = self.tabview.add("🌐 Rede")
+        tab_avancado= self.tabview.add("⚡ Pro")
+
+        self.all_action_btns = []
+
+        def make_action_btn(parent, icon, label, func_name, fg=Theme.QUICK_FG, hv=Theme.QUICK_HV):
+            btn = ctk.CTkButton(parent, text=f"{icon}  {label}", height=34, corner_radius=8,
+                               fg_color=fg, hover_color=hv, anchor="w", font=self.font_btn_sub,
+                               text_color="#ffffff",
+                               command=lambda fn=func_name: self.start_single(fn))
+            btn.pack(fill="x", padx=10, pady=3)
+            self.all_action_btns.append(btn)
             return btn
-        
-        self.btn_quick = make_mode_card(
-            self.modes_panel, 1, 0,
-            "🚀", "RÁPIDO", "Limpa RAM, Temp e DNS em segundos.",
-            Theme.QUICK_FG, Theme.QUICK_HV, "quick")
-        
-        self.btn_adv = make_mode_card(
-            self.modes_panel, 1, 1,
-            "🛡️", "AVANÇADO", "Inclui otimização de disco e defrag.",
-            Theme.ADV_FG, Theme.ADV_HV, "advanced")
-        
-        self.btn_ult = make_mode_card(
-            self.modes_panel, 2, 0,
-            "🔥", "ULTIMATE", "Registro, energia, rede e logs.",
-            Theme.ULT_FG, Theme.ULT_HV, "ultimate")
-        
-        self.btn_god = make_mode_card(
-            self.modes_panel, 2, 1,
-            "⚡", "GOD MODE", "VBS, GPU, TCP, MMCSS, IAs e mais.",
-            Theme.GOD_FG, Theme.GOD_HV, "god_mode")
 
+        # -- Aba Limpeza --
+        make_action_btn(tab_limpeza, "🧹", "Limpar RAM (Working Set)", "clean_ram")
+        make_action_btn(tab_limpeza, "🗑", "Limpar Temp e Shaders", "clean_temp_folders")
+        make_action_btn(tab_limpeza, "💥", "Limpar Standby + Shaders", "clear_standby_and_shaders")
+        make_action_btn(tab_limpeza, "📋", "Limpar Logs de Eventos", "clear_event_logs")
+        make_action_btn(tab_limpeza, "💾", "Storage Sense + Boot 3s", "enable_storage_sense_and_boot")
+        make_action_btn(tab_limpeza, "☠", "Matar Processos Pesados", "kill_memory_hogs", fg="#8b1a1a", hv="#c62828")
+
+        # -- Aba Sistema --
+        make_action_btn(tab_sistema, "⚙", "Tweaks de Registro e Energia", "apply_performance_tweaks", fg=Theme.ADV_FG, hv=Theme.ADV_HV)
+        make_action_btn(tab_sistema, "🚫", "Desativar Serviços Inúteis", "disable_useless_services", fg=Theme.ADV_FG, hv=Theme.ADV_HV)
+        make_action_btn(tab_sistema, "🛡", "Desativar VBS e Visuais", "disable_vbs_and_visuals", fg=Theme.ADV_FG, hv=Theme.ADV_HV)
+        make_action_btn(tab_sistema, "🗜", "Remover Bloatware", "disable_bloat_and_compression", fg=Theme.ULT_FG, hv=Theme.ULT_HV)
+        make_action_btn(tab_sistema, "🔄", "Reiniciar Explorer (Shell)", "restart_explorer", fg=Theme.RAM_FG, hv=Theme.RAM_HV)
+        make_action_btn(tab_sistema, "📀", "Otimizar Memória Virtual", "optimize_virtual_memory", fg=Theme.ADV_FG, hv=Theme.ADV_HV)
+
+        # -- Aba Rede --
+        make_action_btn(tab_rede, "🌐", "Flush DNS", "flush_dns", fg="#00695c", hv="#00897b")
+        make_action_btn(tab_rede, "📡", "Otimizar Latência TCP", "optimize_network_latency", fg="#00695c", hv="#00897b")
+        make_action_btn(tab_rede, "🔄", "Reset de Protocolos de Rede", "reset_network", fg="#00695c", hv="#00897b")
+
+        # -- Aba Pro --
+        make_action_btn(tab_avancado, "🎮", "GPU Scheduling (Hardware)", "optimize_gpu_scheduling", fg=Theme.GOD_FG, hv=Theme.GOD_HV)
+        make_action_btn(tab_avancado, "💿", "Otimizar Drive (TRIM/Defrag)", "optimize_drive", fg=Theme.GOD_FG, hv=Theme.GOD_HV)
+        make_action_btn(tab_avancado, "🔧", "Reparar Sistema (SFC/DISM)", "repair_system", fg=Theme.ULT_FG, hv=Theme.ULT_HV)
+
+        # -- Modos rapidos em linha --
+        modes_row = ctk.CTkFrame(self.modes_panel, fg_color="transparent")
+        modes_row.pack(fill="x", padx=5, pady=(5, 0))
+        modes_row.grid_columnconfigure((0, 1, 2, 3), weight=1)
+
+        mode_defs = [
+            ("🚀 Rápido", "quick", Theme.QUICK_FG, Theme.QUICK_HV),
+            ("🛡 Avançado", "advanced", Theme.ADV_FG, Theme.ADV_HV),
+            ("🔥 Ultimate", "ultimate", Theme.ULT_FG, Theme.ULT_HV),
+            ("⚡ God Mode", "god_mode", Theme.GOD_FG, Theme.GOD_HV),
+        ]
+        self.mode_btns = []
+        for i, (text, mode, fg, hv) in enumerate(mode_defs):
+            btn = ctk.CTkButton(modes_row, text=text, height=30, corner_radius=8,
+                               fg_color=fg, hover_color=hv, text_color="#ffffff",
+                               font=ctk.CTkFont(family="Segoe UI", size=11, weight="bold"),
+                               command=lambda m=mode: self.start_opt(m))
+            btn.grid(row=0, column=i, padx=2, sticky="ew")
+            self.mode_btns.append(btn)
+
+        # Daemon switch
         self.daemon_var = ctk.StringVar(value=self.check_daemon_status())
         self.switch_daemon = ctk.CTkSwitch(
             self.modes_panel, text="Auto RAM Cleaner (Background)", command=self.toggle_daemon,
             variable=self.daemon_var, onvalue="on", offvalue="off",
             font=ctk.CTkFont(family="Segoe UI", size=11, weight="bold"),
             progress_color=Theme.ACCENT_GREEN)
-        self.switch_daemon.grid(row=3, column=0, columnspan=2, pady=(10, 0))
+        self.switch_daemon.pack(pady=(8, 0))
+
         
         # --------------------------------------------------------------------------------
         #  CONSOLE (Parte inferior)
@@ -733,12 +761,55 @@ class WinRAMApp(ctk.CTk):
         threading.Thread(target=self.run_task, args=(mode,), daemon=True).start()
 
     def set_buttons_state(self, state):
-        self.btn_quick.configure(state=state)
-        self.btn_adv.configure(state=state)
-        self.btn_ult.configure(state=state)
         self.btn_ram_boost.configure(state=state)
-        self.btn_god.configure(state=state)
         self.btn_all_in.configure(state=state)
+        for btn in self.all_action_btns:
+            btn.configure(state=state)
+        for btn in self.mode_btns:
+            btn.configure(state=state)
+
+    def start_single(self, func_name):
+        func_map = {
+            "clean_ram": clean_ram, "clean_temp_folders": clean_temp_folders,
+            "clear_standby_and_shaders": clear_standby_and_shaders,
+            "clear_event_logs": clear_event_logs, "enable_storage_sense_and_boot": enable_storage_sense_and_boot,
+            "kill_memory_hogs": kill_memory_hogs, "apply_performance_tweaks": apply_performance_tweaks,
+            "disable_useless_services": disable_useless_services, "disable_vbs_and_visuals": disable_vbs_and_visuals,
+            "disable_bloat_and_compression": disable_bloat_and_compression,
+            "restart_explorer": restart_explorer, "optimize_virtual_memory": optimize_virtual_memory,
+            "flush_dns": flush_dns, "optimize_network_latency": optimize_network_latency,
+            "reset_network": reset_network, "optimize_gpu_scheduling": optimize_gpu_scheduling,
+            "optimize_drive": optimize_drive, "repair_system": repair_system,
+        }
+        func = func_map.get(func_name)
+        if not func: return
+        self.set_buttons_state("disabled")
+        self.status_dot.configure(text="\u23f3  EXECUTANDO...", text_color=Theme.ACCENT_GOLD)
+        self.console_text.configure(state="normal")
+        self.console_text.delete("1.0", "end")
+        self.console_text.insert("end", f"  > Executando: {func_name}...\n\n")
+        self.console_text.configure(state="disabled")
+
+        def _run():
+            try:
+                result = func()
+                self.console_text.configure(state="normal")
+                if "Erro" in str(result) or "Aviso" in str(result):
+                    self.console_text.insert("end", f"  [!] {result}\n", "error_tag")
+                    self.console_text.tag_config("error_tag", foreground=Theme.ACCENT_ORANGE)
+                else:
+                    self.console_text.insert("end", f"  \u2714\ufe0f  {result}\n")
+                self.console_text.insert("end", "\n  \u2714\ufe0f  Conclu\u00eddo!\n")
+                self.console_text.configure(state="disabled")
+                self.status_dot.configure(text="\U0001f7e2  CONCLU\u00cdDO", text_color=Theme.ACCENT_GREEN)
+            except Exception as e:
+                self.console_text.configure(state="normal")
+                self.console_text.insert("end", f"  \u274c  ERRO: {e}\n")
+                self.console_text.configure(state="disabled")
+                self.status_dot.configure(text="\U0001f534  ERRO", text_color=Theme.ACCENT_RED)
+            finally:
+                self.set_buttons_state("normal")
+        threading.Thread(target=_run, daemon=True).start()
 
     def run_task(self, mode):
         try:
