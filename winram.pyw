@@ -783,24 +783,7 @@ class WinRAMApp(ctk.CTk):
         make_action_btn(tab_computador, "🔄", "Reiniciar Windows Explorer", "restart_explorer", fg=Theme.ADV_FG, hv=Theme.ADV_HV)
         make_action_btn(tab_computador, "💉", "Reparar Sistema (SFC/DISM)", "repair_system", fg="#8b1a1a", hv="#c62828")
 
-        # -- Modos rapidos em linha --
-        modes_row = ctk.CTkFrame(self.modes_panel, fg_color="transparent")
-        modes_row.pack(fill="x", padx=5, pady=(5, 0))
-        modes_row.grid_columnconfigure((0, 1, 2, 3), weight=1)
-
-        mode_defs = [
-            ("🚀 Rápido", "quick", Theme.QUICK_FG, Theme.QUICK_HV),
-            ("🛡 Avançado", "advanced", Theme.ADV_FG, Theme.ADV_HV),
-            ("🔥 Ultimate", "ultimate", Theme.ULT_FG, Theme.ULT_HV),
-        ]
         self.mode_btns = []
-        for i, (text, mode, fg, hv) in enumerate(mode_defs):
-            btn = ctk.CTkButton(modes_row, text=text, height=30, corner_radius=8,
-                               fg_color=fg, hover_color=hv, text_color="#ffffff",
-                               font=ctk.CTkFont(family="Segoe UI", size=11, weight="bold"),
-                               command=lambda m=mode: self.start_opt(m))
-            btn.grid(row=0, column=i, padx=2, sticky="ew")
-            self.mode_btns.append(btn)
 
         # Daemon switch
         self.daemon_var = ctk.StringVar(value=self.check_daemon_status())
