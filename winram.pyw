@@ -452,11 +452,20 @@ def optimize_system(mode="quick"):
                   clear_event_logs, apply_performance_tweaks, reset_network, enable_storage_sense_and_boot]
     elif mode == "ram_boost":
         tasks = [kill_memory_hogs, clean_ram, restart_explorer, optimize_virtual_memory]
+    elif mode == "opt_limpeza":
+        tasks = [clean_ram, clean_temp_folders, clear_standby_and_shaders, clear_event_logs, kill_memory_hogs]
+    elif mode == "opt_rede":
+        tasks = [flush_dns, optimize_network_latency, reset_network]
+    elif mode == "opt_gpu_cpu":
+        tasks = [optimize_amd_gpu, optimize_gpu_scheduling, apply_performance_tweaks]
+    elif mode == "opt_computador":
+        tasks = [disable_useless_services, disable_vbs_and_visuals, disable_bloat_and_compression, enable_storage_sense_and_boot, optimize_drive, restart_explorer, repair_system]
     elif mode == "god_mode" or mode == "all_in_one":
         tasks = [clean_ram, clear_standby_and_shaders, clean_temp_folders, flush_dns,
                   optimize_network_latency, optimize_drive, clear_event_logs,
                   apply_performance_tweaks, disable_useless_services, disable_vbs_and_visuals,
                   optimize_gpu_scheduling, optimize_amd_gpu, disable_bloat_and_compression, enable_storage_sense_and_boot, repair_system]
+
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
         futures = {executor.submit(t): t for t in tasks}
@@ -702,12 +711,12 @@ class WinRAMApp(ctk.CTk):
         self.modes_panel = ctk.CTkFrame(self.center_frame, fg_color="transparent")
         self.modes_panel.grid(row=0, column=1, sticky="nsew", padx=(10, 0), pady=0)
 
-        # Botao Gigante (ALL IN ONE) no topo
+        # Botao Gigante (MODO LORD) no topo
         self.btn_all_in = ctk.CTkButton(
-            self.modes_panel, text="🚀  1-CLICK OTIMIZAÇÃO TOTAL  (Executa Todas as Funções)", height=44,
-            fg_color=Theme.ALL_IN_FG, hover_color=Theme.ALL_IN_HV, text_color="#ffffff",
-            font=ctk.CTkFont(family="Segoe UI", size=14, weight="bold"), corner_radius=12,
-            command=lambda: self.start_opt("all_in_one"))
+            self.modes_panel, text="👑  MODO LORD  (Executar Tudo)", height=48,
+            fg_color=Theme.GOD_FG, hover_color=Theme.GOD_HV, text_color="#ffffff",
+            font=ctk.CTkFont(family="Segoe UI", size=15, weight="bold"), corner_radius=12,
+            command=lambda: self.start_opt("god_mode"))
         self.btn_all_in.pack(fill="x", padx=5, pady=(5, 8))
 
         # Tabview com categorias
@@ -718,10 +727,10 @@ class WinRAMApp(ctk.CTk):
                                        corner_radius=14, border_width=1, border_color=Theme.BORDER)
         self.tabview.pack(fill="both", expand=True, padx=5, pady=(0, 5))
 
-        tab_limpeza = self.tabview.add("🧹 Limpeza")
-        tab_sistema = self.tabview.add("⚙ Sistema")
-        tab_rede    = self.tabview.add("🌐 Rede")
-        tab_avancado= self.tabview.add("⚡ Pro")
+        tab_limpeza   = self.tabview.add("🧹 Limpeza")
+        tab_rede      = self.tabview.add("🌐 Rede")
+        tab_gpu_cpu   = self.tabview.add("🎮 GPU/CPU")
+        tab_computador= self.tabview.add("⚙️ Computador")
 
         self.all_action_btns = []
         self.action_btns_dict = {}
@@ -736,32 +745,43 @@ class WinRAMApp(ctk.CTk):
             self.action_btns_dict[func_name] = btn
             return btn
 
+        def make_master_btn(parent, icon, label, mode, fg=Theme.ALL_IN_FG, hv=Theme.ALL_IN_HV):
+            btn = ctk.CTkButton(parent, text=f"{icon}  {label}", height=40, corner_radius=8,
+                               fg_color=fg, hover_color=hv, font=ctk.CTkFont(family="Segoe UI", size=13, weight="bold"),
+                               text_color="#ffffff", command=lambda m=mode: self.start_opt(m))
+            btn.pack(fill="x", padx=10, pady=(5, 15))
+            self.all_action_btns.append(btn)
+            return btn
+
         # -- Aba Limpeza --
-        make_action_btn(tab_limpeza, "🧹", "Limpar RAM (Working Set)", "clean_ram")
+        make_master_btn(tab_limpeza, "🧹", "Executar Limpeza Completa", "opt_limpeza")
+        make_action_btn(tab_limpeza, "🗑", "Limpar RAM (Working Set)", "clean_ram")
         make_action_btn(tab_limpeza, "🗑", "Limpar Temp e Shaders", "clean_temp_folders")
         make_action_btn(tab_limpeza, "💥", "Limpar Standby + Shaders", "clear_standby_and_shaders")
         make_action_btn(tab_limpeza, "📋", "Limpar Logs de Eventos", "clear_event_logs")
-        make_action_btn(tab_limpeza, "💾", "Storage Sense + Boot 3s", "enable_storage_sense_and_boot")
         make_action_btn(tab_limpeza, "☠", "Matar Processos Pesados", "kill_memory_hogs", fg="#8b1a1a", hv="#c62828")
 
-        # -- Aba Sistema --
-        make_action_btn(tab_sistema, "⚙", "Tweaks de Registro e Energia", "apply_performance_tweaks", fg=Theme.ADV_FG, hv=Theme.ADV_HV)
-        make_action_btn(tab_sistema, "🚫", "Desativar Serviços Inúteis", "disable_useless_services", fg=Theme.ADV_FG, hv=Theme.ADV_HV)
-        make_action_btn(tab_sistema, "🛡", "Desativar VBS e Visuais", "disable_vbs_and_visuals", fg=Theme.ADV_FG, hv=Theme.ADV_HV)
-        make_action_btn(tab_sistema, "🗜", "Remover Bloatware", "disable_bloat_and_compression", fg=Theme.ULT_FG, hv=Theme.ULT_HV)
-        make_action_btn(tab_sistema, "🔄", "Reiniciar Explorer (Shell)", "restart_explorer", fg=Theme.RAM_FG, hv=Theme.RAM_HV)
-        make_action_btn(tab_sistema, "📀", "Otimizar Memória Virtual", "optimize_virtual_memory", fg=Theme.ADV_FG, hv=Theme.ADV_HV)
-
         # -- Aba Rede --
-        make_action_btn(tab_rede, "🌐", "Flush DNS", "flush_dns", fg="#00695c", hv="#00897b")
-        make_action_btn(tab_rede, "📡", "Otimizar Latência TCP", "optimize_network_latency", fg="#00695c", hv="#00897b")
-        make_action_btn(tab_rede, "🔄", "Reset de Protocolos de Rede", "reset_network", fg="#00695c", hv="#00897b")
+        make_master_btn(tab_rede, "🌐", "Otimizar Rede Completa", "opt_rede", fg=Theme.RAM_FG, hv=Theme.RAM_HV)
+        make_action_btn(tab_rede, "🌐", "Flush DNS e IP", "flush_dns", fg=Theme.RAM_FG, hv=Theme.RAM_HV)
+        make_action_btn(tab_rede, "⚡", "Otimizar Latência de Rede", "optimize_network_latency", fg=Theme.RAM_FG, hv=Theme.RAM_HV)
+        make_action_btn(tab_rede, "🔧", "Reset Completo de Rede", "reset_network", fg=Theme.RAM_FG, hv=Theme.RAM_HV)
 
-        # -- Aba Pro --
-        make_action_btn(tab_avancado, "🎮", "GPU Scheduling (Hardware)", "optimize_gpu_scheduling", fg=Theme.GOD_FG, hv=Theme.GOD_HV)
-        make_action_btn(tab_avancado, "🔴", "Otimizar AMD GPU (ULPS)", "optimize_amd_gpu", fg="#b71c1c", hv="#d32f2f")
-        make_action_btn(tab_avancado, "💿", "Otimizar Drive (TRIM/Defrag)", "optimize_drive", fg=Theme.GOD_FG, hv=Theme.GOD_HV)
-        make_action_btn(tab_avancado, "🔧", "Reparar Sistema (SFC/DISM)", "repair_system", fg=Theme.ULT_FG, hv=Theme.ULT_HV)
+        # -- Aba GPU e CPU --
+        make_master_btn(tab_gpu_cpu, "🎮", "Otimizar GPU e CPU", "opt_gpu_cpu", fg="#b71c1c", hv="#d32f2f")
+        make_action_btn(tab_gpu_cpu, "🔴", "Otimizar AMD GPU (ULPS)", "optimize_amd_gpu", fg="#b71c1c", hv="#d32f2f")
+        make_action_btn(tab_gpu_cpu, "🎮", "GPU Scheduling (Hardware)", "optimize_gpu_scheduling", fg=Theme.GOD_FG, hv=Theme.GOD_HV)
+        make_action_btn(tab_gpu_cpu, "⚙", "Tweaks de Registro e Energia", "apply_performance_tweaks", fg=Theme.GOD_FG, hv=Theme.GOD_HV)
+
+        # -- Aba Computador --
+        make_master_btn(tab_computador, "⚙️", "Otimizar Computador", "opt_computador", fg=Theme.ADV_FG, hv=Theme.ADV_HV)
+        make_action_btn(tab_computador, "🚫", "Desativar Serviços Inúteis", "disable_useless_services", fg=Theme.ADV_FG, hv=Theme.ADV_HV)
+        make_action_btn(tab_computador, "🛡", "Desativar VBS e Visuais", "disable_vbs_and_visuals", fg=Theme.ADV_FG, hv=Theme.ADV_HV)
+        make_action_btn(tab_computador, "🗑", "Desativar Bloat e Compressão", "disable_bloat_and_compression", fg=Theme.ADV_FG, hv=Theme.ADV_HV)
+        make_action_btn(tab_computador, "💾", "Storage Sense + Boot 3s", "enable_storage_sense_and_boot", fg=Theme.ADV_FG, hv=Theme.ADV_HV)
+        make_action_btn(tab_computador, "💿", "Otimizar Drive (TRIM/Defrag)", "optimize_drive", fg=Theme.ADV_FG, hv=Theme.ADV_HV)
+        make_action_btn(tab_computador, "🔄", "Reiniciar Windows Explorer", "restart_explorer", fg=Theme.ADV_FG, hv=Theme.ADV_HV)
+        make_action_btn(tab_computador, "💉", "Reparar Sistema (SFC/DISM)", "repair_system", fg="#8b1a1a", hv="#c62828")
 
         # -- Modos rapidos em linha --
         modes_row = ctk.CTkFrame(self.modes_panel, fg_color="transparent")
@@ -772,7 +792,6 @@ class WinRAMApp(ctk.CTk):
             ("🚀 Rápido", "quick", Theme.QUICK_FG, Theme.QUICK_HV),
             ("🛡 Avançado", "advanced", Theme.ADV_FG, Theme.ADV_HV),
             ("🔥 Ultimate", "ultimate", Theme.ULT_FG, Theme.ULT_HV),
-            ("⚡ God Mode", "god_mode", Theme.GOD_FG, Theme.GOD_HV),
         ]
         self.mode_btns = []
         for i, (text, mode, fg, hv) in enumerate(mode_defs):
