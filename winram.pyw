@@ -71,7 +71,7 @@ def optimize_virtual_memory():
         return f"Erro crítico ao configurar Memória Virtual: {e}"
 
 def disable_useless_services():
-    services = ["SysMain", "DiagTrack", "WerSvc"]
+    services = ["SysMain", "DiagTrack", "WerSvc", "Spooler", "DoSvc", "XboxGipSvc"]
     logs = []
     for svc in services:
         try:
@@ -315,6 +315,20 @@ def apply_performance_tweaks():
             winreg.SetValueEx(key, "AutoEndTasks", 0, winreg.REG_SZ, "1")
         with winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Policies\Microsoft\Windows\DataCollection") as key:
             winreg.SetValueEx(key, "AllowTelemetry", 0, winreg.REG_DWORD, 0)
+        
+        # Desativar Transparencia, Aero Peek e Animações
+        with winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize") as key:
+            winreg.SetValueEx(key, "EnableTransparency", 0, winreg.REG_DWORD, 0)
+        with winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\DWM") as key:
+            winreg.SetValueEx(key, "EnableAeroPeek", 0, winreg.REG_DWORD, 0)
+        with winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects") as key:
+            winreg.SetValueEx(key, "VisualFXSetting", 0, winreg.REG_DWORD, 3)
+
+        # Barra de Tarefas (Widgets e Chat)
+        with winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced") as key:
+            winreg.SetValueEx(key, "TaskbarDa", 0, winreg.REG_DWORD, 0)
+            winreg.SetValueEx(key, "TaskbarMn", 0, winreg.REG_DWORD, 0)
+
     except Exception as e: logs.append(f"Reg Tweaks: {e}")
 
     try:
@@ -342,6 +356,29 @@ def reset_network():
     if logs: return "Protocolos de rede resetados com avisos: " + " | ".join(logs)
     return "Protocolos de rede resetados sem erros."
 
+def enable_storage_sense_and_boot():
+    if not is_admin(): return "Aviso: Funcionalidades de disco/boot exigem Admin."
+    logs = []
+    try:
+        with winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\StorageSense\Parameters\StoragePolicy") as key:
+            winreg.SetValueEx(key, "01", 0, winreg.REG_DWORD, 1) # Enable Storage Sense
+        subprocess.run(['bcdedit', '/timeout', '3'], capture_output=True, text=True, creationflags=0x08000000)
+    except Exception as e:
+        logs.append(str(e))
+    
+    if logs: return "Storage Sense/Boot aplicados com erros: " + str(logs)
+    return "Storage Sense ativado e Boot Timeout reduzido para 3s."
+
+def repair_system():
+    if not is_admin(): return "Aviso: Reparo de Sistema exige Admin."
+    try:
+        # Assincrono em nova janela
+        script = "echo Iniciando Reparo do Sistema (DISM e SFC). Por favor, aguarde, isso pode demorar varios minutos... && sfc /scannow && DISM /Online /Cleanup-Image /RestoreHealth && echo Concluido! && pause"
+        subprocess.Popen(['cmd', '/c', script], creationflags=subprocess.CREATE_NEW_CONSOLE)
+        return "Processo de Reparo de Imagem (SFC/DISM) iniciado em segunda plano."
+    except Exception as e:
+        return f"Falha ao iniciar reparo: {e}"
+
 def optimize_system(mode="quick"):
     tasks = []
     if mode == "quick":
@@ -350,14 +387,14 @@ def optimize_system(mode="quick"):
         tasks = [clean_ram, clean_temp_folders, flush_dns, optimize_drive]
     elif mode == "ultimate":
         tasks = [clean_ram, clean_temp_folders, flush_dns, optimize_drive,
-                  clear_event_logs, apply_performance_tweaks, reset_network]
+                  clear_event_logs, apply_performance_tweaks, reset_network, enable_storage_sense_and_boot]
     elif mode == "ram_boost":
         tasks = [kill_memory_hogs, clean_ram, restart_explorer, optimize_virtual_memory]
     elif mode == "god_mode" or mode == "all_in_one":
         tasks = [clean_ram, clear_standby_and_shaders, clean_temp_folders, flush_dns,
                   optimize_network_latency, optimize_drive, clear_event_logs,
                   apply_performance_tweaks, disable_useless_services, disable_vbs_and_visuals,
-                  optimize_gpu_scheduling, disable_bloat_and_compression]
+                  optimize_gpu_scheduling, disable_bloat_and_compression, enable_storage_sense_and_boot, repair_system]
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
         futures = {executor.submit(t): t for t in tasks}
