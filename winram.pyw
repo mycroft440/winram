@@ -902,7 +902,6 @@ class WinRAMApp(ctk.CTk):
                 if is_opt and func_name in self.action_btns_dict:
                     btn = self.action_btns_dict[func_name]
                     # Update button to show it's optimized
-                    btn.configure(fg_color=Theme.ACCENT_GREEN, hover_color="#1b5e20", text_color="#ffffff")
                     old_text = btn.cget("text")
                     if "✅" not in old_text and "✔️" not in old_text:
                         btn.configure(text=old_text.replace(old_text.split()[0], "✅"))
