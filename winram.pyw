@@ -861,7 +861,7 @@ class WinRAMApp(ctk.CTk):
         # Daemon switch
         self.daemon_var = ctk.StringVar(value=self.check_daemon_status())
         self.switch_daemon = ctk.CTkSwitch(
-            self.modes_panel, text="Auto RAM Cleaner (Background)", command=self.toggle_daemon,
+            self.modes_panel, text="Auto Maintenance (Background)", command=self.toggle_daemon,
             variable=self.daemon_var, onvalue="on", offvalue="off",
             font=ctk.CTkFont(family="Segoe UI", size=11, weight="bold"),
             progress_color=Theme.ACCENT_GREEN)
@@ -1141,27 +1141,69 @@ def daemon_main():
                 continue
         return None
 
+    last_explorer_check = time.time()
+    last_1h_clean = time.time()
+    last_3h_clean = time.time()
+
     while True:
         try:
+            now = time.time()
+
+            # --- 1. RAM Auto Clean (Every 15s) ---
+            if psutil.virtual_memory().percent >= 65:
+                clean_ram()
+
+            # --- 2. Explorer Leak Check (Every 5 mins) ---
+            if now - last_explorer_check >= 300:
+                last_explorer_check = now
+                for proc in psutil.process_iter(['name', 'memory_info']):
+                    try:
+                        if proc.info['name'] and proc.info['name'].lower() == 'explorer.exe':
+                            if proc.info['memory_info'].rss > 800 * 1024 * 1024:
+                                import subprocess
+                                subprocess.run("taskkill /f /im explorer.exe && start explorer.exe", shell=True, creationflags=0x08000000)
+                    except: pass
+
+            # --- 3. Temp & Standby Clean (Every 1 hour) ---
+            if now - last_1h_clean >= 3600:
+                last_1h_clean = now
+                import subprocess, os, shutil
+                subprocess.run("ipconfig /flushdns", shell=True, creationflags=0x08000000)
+                try:
+                    for temp_dir in [os.environ.get('TEMP'), os.environ.get('TMP'), r"C:\Windows\Temp"]:
+                        if temp_dir and os.path.exists(temp_dir):
+                            for item in os.listdir(temp_dir):
+                                ipath = os.path.join(temp_dir, item)
+                                try:
+                                    if os.path.isfile(ipath): os.remove(ipath)
+                                    elif os.path.isdir(ipath): shutil.rmtree(ipath)
+                                except: pass
+                except: pass
+
+            # --- 4. Deep System Clean (Every 3 hours) ---
+            if now - last_3h_clean >= 10800:
+                last_3h_clean = now
+                import subprocess
+                subprocess.run("wevtutil cl System", shell=True, creationflags=0x08000000)
+                subprocess.run("wevtutil cl Application", shell=True, creationflags=0x08000000)
+                subprocess.run("wevtutil cl Security", shell=True, creationflags=0x08000000)
+
+            # --- 5. Game Booster ---
             game_proc = check_games_running()
             if game_proc and not game_mode_active:
                 try:
                     if sys.platform == 'win32':
                         game_proc.nice(psutil.HIGH_PRIORITY_CLASS)
-                except:
-                    pass
+                except: pass
                 game_mode_active = True
                 clean_ram()
             elif not game_proc and game_mode_active:
                 game_mode_active = False
 
-            if psutil.virtual_memory().percent >= 65:
-                clean_ram()
-                time.sleep(60)
-            else:
-                time.sleep(10)
+            time.sleep(15)
         except:
-            time.sleep(10)
+            import time
+            time.sleep(15)
 
 if __name__ == "__main__":
     if "--daemon" in sys.argv:
