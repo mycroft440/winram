@@ -869,16 +869,16 @@ class WinRAMApp(ctk.CTk):
         tab_gpu_cpu   = self.tabview.add("🎮 GPU/CPU")
         tab_computador= self.tabview.add("⚙️ Computador")
 
-        scroll_limpeza = ctk.CTkScrollableFrame(scroll_limpeza, fg_color="transparent")
+        scroll_limpeza = ctk.CTkScrollableFrame(tab_limpeza, fg_color="transparent")
         scroll_limpeza.pack(fill="both", expand=True)
 
-        scroll_rede = ctk.CTkScrollableFrame(scroll_rede, fg_color="transparent")
+        scroll_rede = ctk.CTkScrollableFrame(tab_rede, fg_color="transparent")
         scroll_rede.pack(fill="both", expand=True)
 
-        scroll_gpu = ctk.CTkScrollableFrame(scroll_gpu, fg_color="transparent")
+        scroll_gpu = ctk.CTkScrollableFrame(tab_gpu_cpu, fg_color="transparent")
         scroll_gpu.pack(fill="both", expand=True)
 
-        scroll_comp = ctk.CTkScrollableFrame(scroll_comp, fg_color="transparent")
+        scroll_comp = ctk.CTkScrollableFrame(tab_computador, fg_color="transparent")
         scroll_comp.pack(fill="both", expand=True)
 
         self.all_action_btns = []
