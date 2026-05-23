@@ -774,22 +774,23 @@ class WinRAMApp(ctk.CTk):
 
         # -- Aba Rede --
         make_master_btn(tab_rede, "🌐", "Otimizar Rede Completa", "opt_rede", fg=Theme.RAM_FG, hv=Theme.RAM_HV)
+        make_action_btn(tab_rede, "❌", "Otimizar Latência de Rede", "optimize_network_latency", fg="#1a1a1a", hv="#2d2d2d")
         make_action_btn(tab_rede, "🌐", "Flush DNS e IP", "flush_dns", fg=Theme.RAM_FG, hv=Theme.RAM_HV)
-        make_action_btn(tab_rede, "⚡", "Otimizar Latência de Rede", "optimize_network_latency", fg=Theme.RAM_FG, hv=Theme.RAM_HV)
         make_action_btn(tab_rede, "🔧", "Reset Completo de Rede", "reset_network", fg=Theme.RAM_FG, hv=Theme.RAM_HV)
 
         # -- Aba GPU e CPU --
         make_master_btn(tab_gpu_cpu, "🎮", "Otimizar GPU e CPU", "opt_gpu_cpu", fg="#b71c1c", hv="#d32f2f")
-        make_action_btn(tab_gpu_cpu, "🔴", "Otimizar AMD GPU (ULPS)", "optimize_amd_gpu", fg="#b71c1c", hv="#d32f2f")
-        make_action_btn(tab_gpu_cpu, "🎮", "GPU Scheduling (Hardware)", "optimize_gpu_scheduling", fg=Theme.GOD_FG, hv=Theme.GOD_HV)
-        make_action_btn(tab_gpu_cpu, "⚙", "Tweaks de Registro e Energia", "apply_performance_tweaks", fg=Theme.GOD_FG, hv=Theme.GOD_HV)
+        make_action_btn(tab_gpu_cpu, "❌", "Otimizar AMD GPU (ULPS)", "optimize_amd_gpu", fg="#1a1a1a", hv="#2d2d2d")
+        make_action_btn(tab_gpu_cpu, "❌", "GPU Scheduling (Hardware)", "optimize_gpu_scheduling", fg="#1a1a1a", hv="#2d2d2d")
+        make_action_btn(tab_gpu_cpu, "❌", "Tweaks de Registro e Energia", "apply_performance_tweaks", fg="#1a1a1a", hv="#2d2d2d")
 
         # -- Aba Computador --
         make_master_btn(tab_computador, "⚙️", "Otimizar Computador", "opt_computador", fg=Theme.ADV_FG, hv=Theme.ADV_HV)
-        make_action_btn(tab_computador, "🚫", "Desativar Serviços Inúteis", "disable_useless_services", fg=Theme.ADV_FG, hv=Theme.ADV_HV)
-        make_action_btn(tab_computador, "🛡", "Desativar VBS e Visuais", "disable_vbs_and_visuals", fg=Theme.ADV_FG, hv=Theme.ADV_HV)
-        make_action_btn(tab_computador, "🗑", "Desativar Bloat e Compressão", "disable_bloat_and_compression", fg=Theme.ADV_FG, hv=Theme.ADV_HV)
-        make_action_btn(tab_computador, "💾", "Storage Sense + Boot 3s", "enable_storage_sense_and_boot", fg=Theme.ADV_FG, hv=Theme.ADV_HV)
+        make_action_btn(tab_computador, "❌", "Desativar Serviços Inúteis", "disable_useless_services", fg="#1a1a1a", hv="#2d2d2d")
+        make_action_btn(tab_computador, "❌", "Desativar VBS e Visuais", "disable_vbs_and_visuals", fg="#1a1a1a", hv="#2d2d2d")
+        make_action_btn(tab_computador, "❌", "Desativar Bloat e Compressão", "disable_bloat_and_compression", fg="#1a1a1a", hv="#2d2d2d")
+        make_action_btn(tab_computador, "❌", "Storage Sense + Boot 3s", "enable_storage_sense_and_boot", fg="#1a1a1a", hv="#2d2d2d")
+        make_action_btn(tab_computador, "❌", "Otimizar Memória Virtual", "optimize_virtual_memory", fg="#1a1a1a", hv="#2d2d2d")
         make_action_btn(tab_computador, "💿", "Otimizar Drive (TRIM/Defrag)", "optimize_drive", fg=Theme.ADV_FG, hv=Theme.ADV_HV)
         make_action_btn(tab_computador, "🔄", "Reiniciar Windows Explorer", "restart_explorer", fg=Theme.ADV_FG, hv=Theme.ADV_HV)
         make_action_btn(tab_computador, "💉", "Reparar Sistema (SFC/DISM)", "repair_system", fg="#8b1a1a", hv="#c62828")
@@ -903,8 +904,8 @@ class WinRAMApp(ctk.CTk):
                     # Update button to show it's optimized
                     btn.configure(fg_color=Theme.ACCENT_GREEN, hover_color="#1b5e20", text_color="#ffffff")
                     old_text = btn.cget("text")
-                    if "✅" not in old_text:
-                        btn.configure(text=old_text.replace(old_text.split()[0], "✔️"))
+                    if "✅" not in old_text and "✔️" not in old_text:
+                        btn.configure(text=old_text.replace(old_text.split()[0], "✅"))
         threading.Thread(target=_bg_check, daemon=True).start()
 
     def set_buttons_state(self, state):
