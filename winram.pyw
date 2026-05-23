@@ -283,26 +283,32 @@ def clear_standby_and_shaders():
 def clean_ram():
     try: import psutil
     except: return "Erro: psutil não instalado."
-    
+
     count = 0
     psapi = ctypes.WinDLL('psapi.dll')
     kernel32 = ctypes.WinDLL('kernel32.dll')
     PROCESS_QUERY_INFORMATION = 0x0400
     PROCESS_SET_QUOTA = 0x0100
     errors = []
-    
-    for _ in range(2):
-        for proc in psutil.process_iter(['pid']):
-            try:
+
+    try: kernel32.SetSystemFileCacheSize(ctypes.c_size_t(-1), ctypes.c_size_t(-1), 0)
+    except: pass
+
+    for proc in psutil.process_iter(['pid', 'memory_info', 'name']):
+        try:
+            if not proc.info.get('name'): continue
+            if proc.info['name'].lower() in ['smss.exe', 'csrss.exe', 'wininit.exe', 'services.exe']: continue
+            if proc.info.get('memory_info') and proc.info['memory_info'].rss > 26214400:
                 handle = kernel32.OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_SET_QUOTA, False, proc.info['pid'])
                 if handle:
                     res = psapi.EmptyWorkingSet(handle)
-                    if res:
-                        count += 1
+                    if res: count += 1
                     kernel32.CloseHandle(handle)
-            except: continue
-            
-    return f"Working Set esvaziado brutalmente em {count//2} processos."
+        except: continue
+
+    if errors:
+        return f"Memória otimizada em {count} apps. (Erros ignorados: {len(errors)})"
+    return f"Memória filtrada com hiper-eficiência! {count} processos pesados aliviados."
 
 def clean_temp_folders():
     paths = [
@@ -1118,19 +1124,20 @@ def daemon_main():
     def clean_ram():
         psapi = ctypes.WinDLL('psapi.dll')
         k32 = ctypes.WinDLL('kernel32.dll')
-        try:
-            k32.SetSystemFileCacheSize(ctypes.c_size_t(-1), ctypes.c_size_t(-1), 0)
+        try: k32.SetSystemFileCacheSize(ctypes.c_size_t(-1), ctypes.c_size_t(-1), 0)
         except: pass
         PROCESS_QUERY_INFORMATION = 0x0400
         PROCESS_SET_QUOTA = 0x0100
-        for proc in psutil.process_iter(['pid']):
+        for proc in psutil.process_iter(['pid', 'memory_info', 'name']):
             try:
-                handle = k32.OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_SET_QUOTA, False, proc.info['pid'])
-                if handle:
-                    psapi.EmptyWorkingSet(handle)
-                    k32.CloseHandle(handle)
-            except:
-                continue
+                if not proc.info.get('name'): continue
+                if proc.info['name'].lower() in ['smss.exe', 'csrss.exe', 'wininit.exe', 'services.exe']: continue
+                if proc.info.get('memory_info') and proc.info['memory_info'].rss > 26214400:
+                    handle = k32.OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_SET_QUOTA, False, proc.info['pid'])
+                    if handle:
+                        psapi.EmptyWorkingSet(handle)
+                        k32.CloseHandle(handle)
+            except: continue
 
     def check_games_running():
         for proc in psutil.process_iter(['name', 'pid']):
