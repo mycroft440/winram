@@ -202,6 +202,36 @@ def optimize_gpu_scheduling():
     if logs: return "Otimizacao GPU concluida com erros: " + " | ".join(logs)
     return "GPU Scheduling otimizado."
 
+def optimize_kernel_io():
+    if not is_admin(): return "Aviso: Otimizar Kernel exige permissões de Administrador."
+    logs = []
+    
+    # 1. BCD Tweaks
+    r1 = subprocess.run(['bcdedit', '/set', 'disabledynamictick', 'yes'], capture_output=True, text=True, creationflags=0x08000000)
+    r2 = subprocess.run(['bcdedit', '/set', 'useplatformclock', 'no'], capture_output=True, text=True, creationflags=0x08000000)
+    
+    if r1.returncode != 0: logs.append(f"DynamicTick: {r1.stderr.strip() or r1.stdout.strip()}")
+    if r2.returncode != 0: logs.append(f"HPET: {r2.stderr.strip() or r2.stdout.strip()}")
+
+    # 2. FSUTIL Tweaks
+    r3 = subprocess.run(['fsutil', 'behavior', 'set', 'disablelastaccess', '1'], capture_output=True, text=True, creationflags=0x08000000)
+    r4 = subprocess.run(['fsutil', 'behavior', 'set', 'disable8dot3', '1'], capture_output=True, text=True, creationflags=0x08000000)
+    
+    if r3.returncode != 0: logs.append(f"LastAccess: {r3.stderr.strip() or r3.stdout.strip()}")
+    if r4.returncode != 0: logs.append(f"8dot3: {r4.stderr.strip() or r4.stdout.strip()}")
+    
+    # 3. Timer Resolution (0.5ms)
+    try:
+        ntdll = ctypes.windll.ntdll
+        current_res = ctypes.c_ulong()
+        # 5000 intervals of 100-ns = 0.5ms
+        ntdll.NtSetTimerResolution(5000, True, ctypes.byref(current_res))
+    except Exception as e:
+        logs.append(f"TimerRes: {e}")
+
+    if logs: return "Otimização de Kernel concluída com erros: " + " | ".join(logs)
+    return "Kernel e I/O hiper-otimizados! Timer travado em 0.5ms, HPET Off, FS puro."
+
 def optimize_network_latency():
     logs = []
     try:
@@ -494,14 +524,14 @@ def optimize_system(mode="quick"):
     elif mode == "opt_limpeza":
         tasks = [clean_ram, clean_temp_folders, clear_standby_and_shaders, clear_event_logs, kill_memory_hogs]
     elif mode == "opt_rede":
-        tasks = [flush_dns, optimize_network_latency, reset_network]
+        tasks = [optimize_kernel_io, flush_dns, optimize_network_latency, reset_network]
     elif mode == "opt_gpu_cpu":
         tasks = [optimize_amd_gpu, optimize_nvidia_gpu, optimize_gpu_scheduling, apply_performance_tweaks]
     elif mode == "opt_computador":
         tasks = [disable_useless_services, disable_vbs_and_visuals, disable_bloat_and_compression, enable_storage_sense_and_boot, optimize_drive, restart_explorer, repair_system]
     elif mode == "god_mode" or mode == "all_in_one":
         tasks = [clean_ram, clear_standby_and_shaders, clean_temp_folders, flush_dns,
-                  optimize_network_latency, optimize_drive, clear_event_logs,
+                  optimize_kernel_io, optimize_network_latency, optimize_drive, clear_event_logs,
                   apply_performance_tweaks, disable_useless_services, disable_vbs_and_visuals,
                   optimize_gpu_scheduling, optimize_amd_gpu, disable_bloat_and_compression, enable_storage_sense_and_boot, repair_system]
 
@@ -621,6 +651,12 @@ def check_states():
         out = r.stdout.strip()
         states["optimize_nvidia_gpu"] = ("True" in out) if "NotNvidia" not in out else False
     except: states["optimize_nvidia_gpu"] = False
+
+    # optimize_kernel_io
+    try:
+        r = subprocess.run(['fsutil', 'behavior', 'query', 'disablelastaccess'], capture_output=True, text=True, creationflags=0x08000000)
+        states["optimize_kernel_io"] = "1" in r.stdout or "3" in r.stdout
+    except: states["optimize_kernel_io"] = False
 
     return states
 
@@ -840,6 +876,7 @@ class WinRAMApp(ctk.CTk):
 
         # -- Aba Rede --
         make_master_btn(tab_rede, "🌐", "Otimizar Rede Completa", "opt_rede", fg=Theme.RAM_FG, hv=Theme.RAM_HV)
+        make_action_btn(tab_rede, "❌", "Otimizar Kernel & I/O Extremo", "optimize_kernel_io", fg="#1a1a1a", hv="#2d2d2d")
         make_action_btn(tab_rede, "❌", "Otimizar Latência de Rede", "optimize_network_latency", fg="#1a1a1a", hv="#2d2d2d")
         make_action_btn(tab_rede, "🌐", "Flush DNS e IP", "flush_dns", fg=Theme.ADV_FG, hv=Theme.ADV_HV)
         make_action_btn(tab_rede, "🔧", "Reset Completo de Rede", "reset_network", fg=Theme.ADV_FG, hv=Theme.ADV_HV)
@@ -991,7 +1028,7 @@ class WinRAMApp(ctk.CTk):
             "disable_useless_services": disable_useless_services, "disable_vbs_and_visuals": disable_vbs_and_visuals,
             "disable_bloat_and_compression": disable_bloat_and_compression,
             "restart_explorer": restart_explorer, "optimize_virtual_memory": optimize_virtual_memory,
-            "flush_dns": flush_dns, "optimize_network_latency": optimize_network_latency,
+            "flush_dns": flush_dns, "optimize_network_latency": optimize_network_latency, "optimize_kernel_io": optimize_kernel_io,
             "reset_network": reset_network, "optimize_gpu_scheduling": optimize_gpu_scheduling,
             "optimize_amd_gpu": optimize_amd_gpu,
             "optimize_nvidia_gpu": optimize_nvidia_gpu,
