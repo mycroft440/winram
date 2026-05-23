@@ -1142,7 +1142,7 @@ def daemon_main():
         return None
 
     last_explorer_check = time.time()
-    last_1h_clean = time.time()
+    last_24h_clean = time.time()
     last_3h_clean = time.time()
 
     while True:
@@ -1164,9 +1164,9 @@ def daemon_main():
                                 subprocess.run("taskkill /f /im explorer.exe && start explorer.exe", shell=True, creationflags=0x08000000)
                     except: pass
 
-            # --- 3. Temp & Standby Clean (Every 1 hour) ---
-            if now - last_1h_clean >= 3600:
-                last_1h_clean = now
+            # --- 3. Temp & Standby Clean (Every 24 hours) ---
+            if now - last_24h_clean >= 86400:
+                last_24h_clean = now
                 import subprocess, os, shutil
                 subprocess.run("ipconfig /flushdns", shell=True, creationflags=0x08000000)
                 try:
