@@ -202,6 +202,23 @@ def optimize_gpu_scheduling():
     if logs: return "Otimizacao GPU concluida com erros: " + " | ".join(logs)
     return "GPU Scheduling otimizado."
 
+def optimize_cpu_extreme():
+    if not is_admin(): return "Aviso: Otimizar CPU Extremo exige Admin."
+    logs = []
+    try:
+        with winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management") as key:
+            winreg.SetValueEx(key, "FeatureSettingsOverride", 0, winreg.REG_DWORD, 3)
+            winreg.SetValueEx(key, "FeatureSettingsOverrideMask", 0, winreg.REG_DWORD, 3)
+    except Exception as e: logs.append(f"Mitigações: {e}")
+
+    try:
+        with winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\PriorityControl") as key:
+            winreg.SetValueEx(key, "Win32PrioritySeparation", 0, winreg.REG_DWORD, 38)
+    except Exception as e: logs.append(f"Quantum: {e}")
+
+    if logs: return "Otimização Extrema de CPU concluída com erros: " + " | ".join(logs)
+    return "CPU Extrema: Quantum configurado para Server e Mitigações desligadas. Reinicie o PC."
+
 def optimize_kernel_io():
     if not is_admin(): return "Aviso: Otimizar Kernel exige permissões de Administrador."
     logs = []
@@ -524,14 +541,14 @@ def optimize_system(mode="quick"):
     elif mode == "opt_limpeza":
         tasks = [clean_ram, clean_temp_folders, clear_standby_and_shaders, clear_event_logs, kill_memory_hogs]
     elif mode == "opt_rede":
-        tasks = [optimize_kernel_io, flush_dns, optimize_network_latency, reset_network]
+        tasks = [optimize_cpu_extreme, optimize_kernel_io, flush_dns, optimize_network_latency, reset_network]
     elif mode == "opt_gpu_cpu":
         tasks = [optimize_amd_gpu, optimize_nvidia_gpu, optimize_gpu_scheduling, apply_performance_tweaks]
     elif mode == "opt_computador":
         tasks = [disable_useless_services, disable_vbs_and_visuals, disable_bloat_and_compression, enable_storage_sense_and_boot, optimize_drive, restart_explorer, repair_system]
     elif mode == "god_mode" or mode == "all_in_one":
         tasks = [clean_ram, clear_standby_and_shaders, clean_temp_folders, flush_dns,
-                  optimize_kernel_io, optimize_network_latency, optimize_drive, clear_event_logs,
+                  optimize_cpu_extreme, optimize_kernel_io, optimize_network_latency, optimize_drive, clear_event_logs,
                   apply_performance_tweaks, disable_useless_services, disable_vbs_and_visuals,
                   optimize_gpu_scheduling, optimize_amd_gpu, disable_bloat_and_compression, enable_storage_sense_and_boot, repair_system]
 
@@ -651,6 +668,13 @@ def check_states():
         out = r.stdout.strip()
         states["optimize_nvidia_gpu"] = ("True" in out) if "NotNvidia" not in out else False
     except: states["optimize_nvidia_gpu"] = False
+
+    # optimize_cpu_extreme
+    try:
+        with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management") as key:
+            val = winreg.QueryValueEx(key, "FeatureSettingsOverride")[0]
+            states["optimize_cpu_extreme"] = (val == 3)
+    except: states["optimize_cpu_extreme"] = False
 
     # optimize_kernel_io
     try:
@@ -901,6 +925,7 @@ class WinRAMApp(ctk.CTk):
 
         # -- Aba Computador --
         make_master_btn(scroll_comp, "⚙️", "Otimizar Computador", "opt_computador", fg=Theme.ADV_FG, hv=Theme.ADV_HV)
+        make_action_btn(scroll_comp, "❌", "Otimizar CPU Extremo (Quantum/Mitigações)", "optimize_cpu_extreme", fg="#1a1a1a", hv="#2d2d2d")
         make_action_btn(scroll_comp, "❌", "Otimizar Kernel & I/O Extremo", "optimize_kernel_io", fg="#1a1a1a", hv="#2d2d2d")
         make_action_btn(scroll_comp, "❌", "Desativar Serviços Inúteis", "disable_useless_services", fg="#1a1a1a", hv="#2d2d2d")
         make_action_btn(scroll_comp, "❌", "Desativar VBS e Visuais", "disable_vbs_and_visuals", fg="#1a1a1a", hv="#2d2d2d")
@@ -1040,7 +1065,7 @@ class WinRAMApp(ctk.CTk):
             "disable_useless_services": disable_useless_services, "disable_vbs_and_visuals": disable_vbs_and_visuals,
             "disable_bloat_and_compression": disable_bloat_and_compression,
             "restart_explorer": restart_explorer, "optimize_virtual_memory": optimize_virtual_memory,
-            "flush_dns": flush_dns, "optimize_network_latency": optimize_network_latency, "optimize_kernel_io": optimize_kernel_io,
+            "flush_dns": flush_dns, "optimize_network_latency": optimize_network_latency, "optimize_cpu_extreme": optimize_cpu_extreme, "optimize_kernel_io": optimize_kernel_io,
             "reset_network": reset_network, "optimize_gpu_scheduling": optimize_gpu_scheduling,
             "optimize_amd_gpu": optimize_amd_gpu,
             "optimize_nvidia_gpu": optimize_nvidia_gpu,
