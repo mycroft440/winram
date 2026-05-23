@@ -1144,14 +1144,16 @@ def daemon_main():
     last_explorer_check = time.time()
     last_24h_clean = time.time()
     last_3h_clean = time.time()
+    last_ram_clean = 0
 
     while True:
         try:
             now = time.time()
 
-            # --- 1. RAM Auto Clean (Every 15s) ---
-            if psutil.virtual_memory().percent >= 65:
+            # --- 1. RAM Auto Clean (Every 15s check, 3 mins cooldown) ---
+            if psutil.virtual_memory().percent >= 65 and (now - last_ram_clean >= 180):
                 clean_ram()
+                last_ram_clean = now
 
             # --- 2. Explorer Leak Check (Every 5 mins) ---
             if now - last_explorer_check >= 300:
