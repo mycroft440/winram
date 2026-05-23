@@ -845,6 +845,18 @@ class WinRAMApp(ctk.CTk):
         tab_gpu_cpu   = self.tabview.add("🎮 GPU/CPU")
         tab_computador= self.tabview.add("⚙️ Computador")
 
+        scroll_limpeza = ctk.CTkScrollableFrame(scroll_limpeza, fg_color="transparent")
+        scroll_limpeza.pack(fill="both", expand=True)
+
+        scroll_rede = ctk.CTkScrollableFrame(scroll_rede, fg_color="transparent")
+        scroll_rede.pack(fill="both", expand=True)
+
+        scroll_gpu = ctk.CTkScrollableFrame(scroll_gpu, fg_color="transparent")
+        scroll_gpu.pack(fill="both", expand=True)
+
+        scroll_comp = ctk.CTkScrollableFrame(scroll_comp, fg_color="transparent")
+        scroll_comp.pack(fill="both", expand=True)
+
         self.all_action_btns = []
         self.action_btns_dict = {}
 
@@ -867,37 +879,37 @@ class WinRAMApp(ctk.CTk):
             return btn
 
         # -- Aba Limpeza --
-        make_master_btn(tab_limpeza, "🧹", "Executar Limpeza Completa", "opt_limpeza")
-        make_action_btn(tab_limpeza, "🗑", "Limpar RAM (Working Set)", "clean_ram")
-        make_action_btn(tab_limpeza, "🗑", "Limpar Temp e Shaders", "clean_temp_folders")
-        make_action_btn(tab_limpeza, "💥", "Limpar Standby + Shaders", "clear_standby_and_shaders")
-        make_action_btn(tab_limpeza, "📋", "Limpar Logs de Eventos", "clear_event_logs")
-        make_action_btn(tab_limpeza, "☠", "Matar Processos Pesados", "kill_memory_hogs", fg="#8b1a1a", hv="#c62828")
+        make_master_btn(scroll_limpeza, "🧹", "Executar Limpeza Completa", "opt_limpeza")
+        make_action_btn(scroll_limpeza, "🗑", "Limpar RAM (Working Set)", "clean_ram")
+        make_action_btn(scroll_limpeza, "🗑", "Limpar Temp e Shaders", "clean_temp_folders")
+        make_action_btn(scroll_limpeza, "💥", "Limpar Standby + Shaders", "clear_standby_and_shaders")
+        make_action_btn(scroll_limpeza, "📋", "Limpar Logs de Eventos", "clear_event_logs")
+        make_action_btn(scroll_limpeza, "☠", "Matar Processos Pesados", "kill_memory_hogs", fg="#8b1a1a", hv="#c62828")
 
         # -- Aba Rede --
-        make_master_btn(tab_rede, "🌐", "Otimizar Rede Completa", "opt_rede", fg=Theme.RAM_FG, hv=Theme.RAM_HV)
-        make_action_btn(tab_rede, "❌", "Otimizar Latência de Rede", "optimize_network_latency", fg="#1a1a1a", hv="#2d2d2d")
-        make_action_btn(tab_rede, "🌐", "Flush DNS e IP", "flush_dns", fg=Theme.ADV_FG, hv=Theme.ADV_HV)
-        make_action_btn(tab_rede, "🔧", "Reset Completo de Rede", "reset_network", fg=Theme.ADV_FG, hv=Theme.ADV_HV)
+        make_master_btn(scroll_rede, "🌐", "Otimizar Rede Completa", "opt_rede", fg=Theme.RAM_FG, hv=Theme.RAM_HV)
+        make_action_btn(scroll_rede, "❌", "Otimizar Latência de Rede", "optimize_network_latency", fg="#1a1a1a", hv="#2d2d2d")
+        make_action_btn(scroll_rede, "🌐", "Flush DNS e IP", "flush_dns", fg=Theme.ADV_FG, hv=Theme.ADV_HV)
+        make_action_btn(scroll_rede, "🔧", "Reset Completo de Rede", "reset_network", fg=Theme.ADV_FG, hv=Theme.ADV_HV)
 
         # -- Aba GPU e CPU --
-        make_master_btn(tab_gpu_cpu, "🎮", "Otimizar GPU e CPU", "opt_gpu_cpu", fg="#b71c1c", hv="#d32f2f")
-        make_action_btn(tab_gpu_cpu, "❌", "Otimizar AMD GPU (ULPS)", "optimize_amd_gpu", fg="#1a1a1a", hv="#2d2d2d")
-        make_action_btn(tab_gpu_cpu, "❌", "Otimizar NVIDIA GPU (MSI/Latência)", "optimize_nvidia_gpu", fg="#1a1a1a", hv="#2d2d2d")
-        make_action_btn(tab_gpu_cpu, "❌", "GPU Scheduling (Hardware)", "optimize_gpu_scheduling", fg="#1a1a1a", hv="#2d2d2d")
-        make_action_btn(tab_gpu_cpu, "❌", "Tweaks de Registro e Energia", "apply_performance_tweaks", fg="#1a1a1a", hv="#2d2d2d")
+        make_master_btn(scroll_gpu, "🎮", "Otimizar GPU e CPU", "opt_gpu_cpu", fg="#b71c1c", hv="#d32f2f")
+        make_action_btn(scroll_gpu, "❌", "Otimizar AMD GPU (ULPS)", "optimize_amd_gpu", fg="#1a1a1a", hv="#2d2d2d")
+        make_action_btn(scroll_gpu, "❌", "Otimizar NVIDIA GPU (MSI/Latência)", "optimize_nvidia_gpu", fg="#1a1a1a", hv="#2d2d2d")
+        make_action_btn(scroll_gpu, "❌", "GPU Scheduling (Hardware)", "optimize_gpu_scheduling", fg="#1a1a1a", hv="#2d2d2d")
+        make_action_btn(scroll_gpu, "❌", "Tweaks de Registro e Energia", "apply_performance_tweaks", fg="#1a1a1a", hv="#2d2d2d")
 
         # -- Aba Computador --
-        make_master_btn(tab_computador, "⚙️", "Otimizar Computador", "opt_computador", fg=Theme.ADV_FG, hv=Theme.ADV_HV)
-        make_action_btn(tab_computador, "❌", "Otimizar Kernel & I/O Extremo", "optimize_kernel_io", fg="#1a1a1a", hv="#2d2d2d")
-        make_action_btn(tab_computador, "❌", "Desativar Serviços Inúteis", "disable_useless_services", fg="#1a1a1a", hv="#2d2d2d")
-        make_action_btn(tab_computador, "❌", "Desativar VBS e Visuais", "disable_vbs_and_visuals", fg="#1a1a1a", hv="#2d2d2d")
-        make_action_btn(tab_computador, "❌", "Desativar Bloat e Compressão", "disable_bloat_and_compression", fg="#1a1a1a", hv="#2d2d2d")
-        make_action_btn(tab_computador, "❌", "Storage Sense + Boot 3s", "enable_storage_sense_and_boot", fg="#1a1a1a", hv="#2d2d2d")
-        make_action_btn(tab_computador, "❌", "Otimizar Memória Virtual", "optimize_virtual_memory", fg="#1a1a1a", hv="#2d2d2d")
-        make_action_btn(tab_computador, "💿", "Otimizar Drive (TRIM/Defrag)", "optimize_drive", fg=Theme.ADV_FG, hv=Theme.ADV_HV)
-        make_action_btn(tab_computador, "🔄", "Reiniciar Windows Explorer", "restart_explorer", fg=Theme.ADV_FG, hv=Theme.ADV_HV)
-        make_action_btn(tab_computador, "💉", "Reparar Sistema (SFC/DISM)", "repair_system", fg="#8b1a1a", hv="#c62828")
+        make_master_btn(scroll_comp, "⚙️", "Otimizar Computador", "opt_computador", fg=Theme.ADV_FG, hv=Theme.ADV_HV)
+        make_action_btn(scroll_comp, "❌", "Otimizar Kernel & I/O Extremo", "optimize_kernel_io", fg="#1a1a1a", hv="#2d2d2d")
+        make_action_btn(scroll_comp, "❌", "Desativar Serviços Inúteis", "disable_useless_services", fg="#1a1a1a", hv="#2d2d2d")
+        make_action_btn(scroll_comp, "❌", "Desativar VBS e Visuais", "disable_vbs_and_visuals", fg="#1a1a1a", hv="#2d2d2d")
+        make_action_btn(scroll_comp, "❌", "Desativar Bloat e Compressão", "disable_bloat_and_compression", fg="#1a1a1a", hv="#2d2d2d")
+        make_action_btn(scroll_comp, "❌", "Storage Sense + Boot 3s", "enable_storage_sense_and_boot", fg="#1a1a1a", hv="#2d2d2d")
+        make_action_btn(scroll_comp, "❌", "Otimizar Memória Virtual", "optimize_virtual_memory", fg="#1a1a1a", hv="#2d2d2d")
+        make_action_btn(scroll_comp, "💿", "Otimizar Drive (TRIM/Defrag)", "optimize_drive", fg=Theme.ADV_FG, hv=Theme.ADV_HV)
+        make_action_btn(scroll_comp, "🔄", "Reiniciar Windows Explorer", "restart_explorer", fg=Theme.ADV_FG, hv=Theme.ADV_HV)
+        make_action_btn(scroll_comp, "💉", "Reparar Sistema (SFC/DISM)", "repair_system", fg="#8b1a1a", hv="#c62828")
 
         self.mode_btns = []
 
