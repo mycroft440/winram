@@ -1145,15 +1145,41 @@ def daemon_main():
     last_24h_clean = time.time()
     last_3h_clean = time.time()
     last_ram_clean = 0
+    
+    dyn_threshold = 65
+    dyn_cooldown = 300
 
     while True:
         try:
             now = time.time()
+            percent = psutil.virtual_memory().percent
 
-            # --- 1. RAM Auto Clean (Every 15s check, 3 mins cooldown) ---
-            if psutil.virtual_memory().percent >= 65 and (now - last_ram_clean >= 180):
+            # --- 1. Dynamic RAM Auto Clean ---
+            if percent >= 98:
                 clean_ram()
                 last_ram_clean = now
+            elif percent >= 80:
+                if dyn_threshold == 65 or (now - last_ram_clean >= dyn_cooldown):
+                    clean_ram()
+                    last_ram_clean = now
+                    time.sleep(1)
+                    if psutil.virtual_memory().percent >= 65:
+                        dyn_threshold = 80
+                        dyn_cooldown = 120
+                    else:
+                        dyn_threshold = 65
+                        dyn_cooldown = 300
+            elif percent >= dyn_threshold:
+                if now - last_ram_clean >= dyn_cooldown:
+                    clean_ram()
+                    last_ram_clean = now
+                    time.sleep(1)
+                    if psutil.virtual_memory().percent >= 65:
+                        dyn_threshold = 80
+                        dyn_cooldown = 120
+            elif percent < 65:
+                dyn_threshold = 65
+                dyn_cooldown = 300
 
             # --- 2. Explorer Leak Check (Every 5 mins) ---
             if now - last_explorer_check >= 300:
