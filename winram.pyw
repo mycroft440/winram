@@ -602,12 +602,12 @@ class WinRAMApp(ctk.CTk):
         super().__init__()
 
         self.title("WinRAM Ultimate v2.0")
-        self.geometry("900x600")
+        self.geometry("900x680")
         self.resizable(False, False)
         self.configure(fg_color=Theme.BG_DARK)
         
         # ------ Tipografia ---
-        self.font_title   = ctk.CTkFont(family="Segoe UI", size=32, weight="bold")
+        self.font_title   = ctk.CTkFont(family="Segoe UI", size=24, weight="bold")
         self.font_subtitle= ctk.CTkFont(family="Segoe UI", size=13)
         self.font_big_num = ctk.CTkFont(family="Consolas", size=56, weight="bold")
         self.font_label   = ctk.CTkFont(family="Segoe UI", size=12, weight="bold")
@@ -639,23 +639,7 @@ class WinRAMApp(ctk.CTk):
                                            font=self.font_subtitle, text_color=Theme.TEXT_SECONDARY)
         self.label_version.pack(anchor="w")
         
-        # Admin Badge
-        header_right = ctk.CTkFrame(self.header_frame, fg_color="transparent")
-        header_right.pack(side="right", fill="y", pady=15)
-        
-        if is_admin():
-            badge_color = Theme.ACCENT_GREEN
-            badge_text = "✅  ADMINISTRADOR"
-        else:
-            badge_color = Theme.ACCENT_GOLD
-            badge_text = "⚠️  MODO LIMITADO"
-        
-        self.admin_badge = ctk.CTkLabel(header_right, text=badge_text, 
-                                         text_color=badge_color,
-                                         font=ctk.CTkFont(family="Segoe UI", size=11, weight="bold"),
-                                         fg_color=Theme.BG_CARD, corner_radius=8,
-                                         padx=14, pady=6)
-        self.admin_badge.pack(anchor="e")
+
         
         # ------ Linha divisória ---
         divider = ctk.CTkFrame(self.main_frame, fg_color=Theme.BORDER, height=1)
@@ -919,7 +903,7 @@ class WinRAMApp(ctk.CTk):
                     # Update button to show it's optimized
                     btn.configure(fg_color=Theme.ACCENT_GREEN, hover_color="#1b5e20", text_color="#ffffff")
                     old_text = btn.cget("text")
-                    if "✔️" not in old_text:
+                    if "✅" not in old_text:
                         btn.configure(text=old_text.replace(old_text.split()[0], "✔️"))
         threading.Thread(target=_bg_check, daemon=True).start()
 
