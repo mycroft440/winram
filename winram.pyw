@@ -746,7 +746,7 @@ class WinRAMApp(ctk.CTk):
         self.all_action_btns = []
         self.action_btns_dict = {}
 
-        def make_action_btn(parent, icon, label, func_name, fg=Theme.QUICK_FG, hv=Theme.QUICK_HV):
+        def make_action_btn(parent, icon, label, func_name, fg=Theme.ADV_FG, hv=Theme.ADV_HV):
             btn = ctk.CTkButton(parent, text=f"{icon}  {label}", height=34, corner_radius=8,
                                fg_color=fg, hover_color=hv, anchor="w", font=self.font_btn_sub,
                                text_color="#ffffff",
@@ -775,8 +775,8 @@ class WinRAMApp(ctk.CTk):
         # -- Aba Rede --
         make_master_btn(tab_rede, "🌐", "Otimizar Rede Completa", "opt_rede", fg=Theme.RAM_FG, hv=Theme.RAM_HV)
         make_action_btn(tab_rede, "❌", "Otimizar Latência de Rede", "optimize_network_latency", fg="#1a1a1a", hv="#2d2d2d")
-        make_action_btn(tab_rede, "🌐", "Flush DNS e IP", "flush_dns", fg=Theme.RAM_FG, hv=Theme.RAM_HV)
-        make_action_btn(tab_rede, "🔧", "Reset Completo de Rede", "reset_network", fg=Theme.RAM_FG, hv=Theme.RAM_HV)
+        make_action_btn(tab_rede, "🌐", "Flush DNS e IP", "flush_dns", fg=Theme.ADV_FG, hv=Theme.ADV_HV)
+        make_action_btn(tab_rede, "🔧", "Reset Completo de Rede", "reset_network", fg=Theme.ADV_FG, hv=Theme.ADV_HV)
 
         # -- Aba GPU e CPU --
         make_master_btn(tab_gpu_cpu, "🎮", "Otimizar GPU e CPU", "opt_gpu_cpu", fg="#b71c1c", hv="#d32f2f")
