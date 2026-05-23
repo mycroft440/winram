@@ -602,7 +602,14 @@ class WinRAMApp(ctk.CTk):
         super().__init__()
 
         self.title("WinRAM Ultimate v2.0")
-        self.geometry("900x680")
+        window_width = 900
+        window_height = 640
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        center_x = int(screen_width/2 - window_width / 2)
+        center_y = int(screen_height/2 - window_height / 2)
+        if center_y > 40: center_y -= 40
+        self.geometry(f"{window_width}x{window_height}+{center_x}+{center_y}")
         self.resizable(False, False)
         self.configure(fg_color=Theme.BG_DARK)
         
@@ -625,7 +632,7 @@ class WinRAMApp(ctk.CTk):
         #  HEADER (Titulo + Admin Badge)
         # --------------------------------------------------------------------------------
         self.header_frame = ctk.CTkFrame(self.main_frame, fg_color=Theme.BG_DARK, corner_radius=0, height=80)
-        self.header_frame.pack(fill="x", padx=30, pady=(20, 0))
+        self.header_frame.pack(fill="x", padx=30, pady=(5, 0))
         self.header_frame.pack_propagate(False)
         
         header_left = ctk.CTkFrame(self.header_frame, fg_color="transparent")
@@ -649,7 +656,7 @@ class WinRAMApp(ctk.CTk):
         #  ÁÁREA CENTRAL (Stats + Botões lado a lado)
         # --------------------------------------------------------------------------------
         self.center_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
-        self.center_frame.pack(fill="both", expand=True, padx=30, pady=(15, 0))
+        self.center_frame.pack(fill="both", expand=True, padx=30, pady=(5, 0))
         self.center_frame.grid_columnconfigure(0, weight=2)
         self.center_frame.grid_columnconfigure(1, weight=3)
         self.center_frame.grid_rowconfigure(0, weight=1)
@@ -813,7 +820,7 @@ class WinRAMApp(ctk.CTk):
         self.console_outer = ctk.CTkFrame(self.main_frame, fg_color=Theme.BG_CARD, 
                                            corner_radius=14, border_width=1, border_color=Theme.BORDER,
                                            height=130)
-        self.console_outer.pack(fill="x", padx=30, pady=(15, 20))
+        self.console_outer.pack(fill="x", padx=30, pady=(5, 10))
         self.console_outer.pack_propagate(False)
         
         # Console Header
