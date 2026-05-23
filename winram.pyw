@@ -537,6 +537,13 @@ def check_states():
         states["optimize_amd_gpu"] = ("True" in r.stdout)
     except: states["optimize_amd_gpu"] = False
 
+    # 7. disable_bloat_and_compression
+    try:
+        ps_script = "(Get-MMAgent).MemoryCompression"
+        r = subprocess.run(['powershell', '-Command', ps_script], capture_output=True, text=True, creationflags=0x08000000)
+        states["disable_bloat_and_compression"] = ("False" in r.stdout)
+    except: states["disable_bloat_and_compression"] = False
+
     return states
 
 class Theme:
