@@ -876,7 +876,6 @@ class WinRAMApp(ctk.CTk):
 
         # -- Aba Rede --
         make_master_btn(tab_rede, "🌐", "Otimizar Rede Completa", "opt_rede", fg=Theme.RAM_FG, hv=Theme.RAM_HV)
-        make_action_btn(tab_rede, "❌", "Otimizar Kernel & I/O Extremo", "optimize_kernel_io", fg="#1a1a1a", hv="#2d2d2d")
         make_action_btn(tab_rede, "❌", "Otimizar Latência de Rede", "optimize_network_latency", fg="#1a1a1a", hv="#2d2d2d")
         make_action_btn(tab_rede, "🌐", "Flush DNS e IP", "flush_dns", fg=Theme.ADV_FG, hv=Theme.ADV_HV)
         make_action_btn(tab_rede, "🔧", "Reset Completo de Rede", "reset_network", fg=Theme.ADV_FG, hv=Theme.ADV_HV)
@@ -890,6 +889,7 @@ class WinRAMApp(ctk.CTk):
 
         # -- Aba Computador --
         make_master_btn(tab_computador, "⚙️", "Otimizar Computador", "opt_computador", fg=Theme.ADV_FG, hv=Theme.ADV_HV)
+        make_action_btn(tab_computador, "❌", "Otimizar Kernel & I/O Extremo", "optimize_kernel_io", fg="#1a1a1a", hv="#2d2d2d")
         make_action_btn(tab_computador, "❌", "Desativar Serviços Inúteis", "disable_useless_services", fg="#1a1a1a", hv="#2d2d2d")
         make_action_btn(tab_computador, "❌", "Desativar VBS e Visuais", "disable_vbs_and_visuals", fg="#1a1a1a", hv="#2d2d2d")
         make_action_btn(tab_computador, "❌", "Desativar Bloat e Compressão", "disable_bloat_and_compression", fg="#1a1a1a", hv="#2d2d2d")
