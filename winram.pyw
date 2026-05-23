@@ -150,6 +150,39 @@ def optimize_amd_gpu():
         if count > 0:
             return f"AMD ULPS desativado em {count} placa(s). FPS e Stuttering otimizados!"
         return "Nenhuma placa AMD com ULPS encontrada. Tudo certo."
+    except Exception as e: return f"Falha AMD: {e}"
+
+def optimize_nvidia_gpu():
+    if not is_admin(): return "Aviso: Otimizar NVIDIA GPU exige Admin."
+    try:
+        ps_script = r'''
+        $nv_gpus = Get-CimInstance Win32_VideoController | Where-Object { $_.PNPDeviceID -match "VEN_10DE" }
+        if (-not $nv_gpus) { Write-Output "Nenhuma placa NVIDIA detectada."; exit }
+        
+        $msi_count = 0
+        $paths = Get-ChildItem -Path "HKLM:\SYSTEM\CurrentControlSet\Enum\PCI\VEN_10DE*" -Recurse -Depth 1 -ErrorAction SilentlyContinue
+        foreach ($p in $paths) {
+            $device_params = Join-Path $p.PSPath "Device Parameters"
+            if (Test-Path $device_params) {
+                $int_mgmt = Join-Path $device_params "Interrupt Management\MessageSignaledInterruptProperties"
+                if (-not (Test-Path $int_mgmt)) { New-Item -Path $int_mgmt -Force -ErrorAction SilentlyContinue | Out-Null }
+                Set-ItemProperty -Path $int_mgmt -Name "MSISupported" -Value 1 -Type DWord -ErrorAction SilentlyContinue
+                $msi_count++
+            }
+        }
+        
+        Stop-Service -Name "NvTelemetryContainer" -Force -ErrorAction SilentlyContinue
+        Set-Service -Name "NvTelemetryContainer" -StartupType Disabled -ErrorAction SilentlyContinue
+        
+        powercfg /setacvalueindex SCHEME_CURRENT 501a4d13-42af-4429-9fd1-a8218c268e20 ee12f906-d277-404b-b6da-e5fa1a558deb 0
+        powercfg /setactive SCHEME_CURRENT
+        
+        Write-Output "NVIDIA otimizada com sucesso! MSI ativado e Telemetria OFF."
+        '''
+        r = subprocess.run(['powershell', '-Command', ps_script], capture_output=True, text=True, creationflags=0x08000000)
+        return r.stdout.strip() if r.stdout.strip() else "Erro ao executar otimização NVIDIA."
+    except Exception as e: return f"Falha NVIDIA: {e}"
+
     except Exception as e:
         return f"Erro ao tentar otimizar AMD GPU: {e}"
 
@@ -457,7 +490,7 @@ def optimize_system(mode="quick"):
     elif mode == "opt_rede":
         tasks = [flush_dns, optimize_network_latency, reset_network]
     elif mode == "opt_gpu_cpu":
-        tasks = [optimize_amd_gpu, optimize_gpu_scheduling, apply_performance_tweaks]
+        tasks = [optimize_amd_gpu, optimize_nvidia_gpu, optimize_gpu_scheduling, apply_performance_tweaks]
     elif mode == "opt_computador":
         tasks = [disable_useless_services, disable_vbs_and_visuals, disable_bloat_and_compression, enable_storage_sense_and_boot, optimize_drive, restart_explorer, repair_system]
     elif mode == "god_mode" or mode == "all_in_one":
@@ -563,6 +596,25 @@ def check_states():
         r = subprocess.run(['powershell', '-Command', ps_script], capture_output=True, text=True, creationflags=0x08000000)
         states["optimize_virtual_memory"] = ("True" in r.stdout)
     except: states["optimize_virtual_memory"] = False
+
+    # 10. optimize_nvidia_gpu
+    try:
+        ps_script = r'''
+        $nv_gpus = Get-CimInstance Win32_VideoController | Where-Object { $_.PNPDeviceID -match "VEN_10DE" }
+        if (-not $nv_gpus) { Write-Output "NotNvidia"; exit }
+        $paths = Get-ChildItem -Path "HKLM:\SYSTEM\CurrentControlSet\Enum\PCI\VEN_10DE*" -Recurse -Depth 1 -ErrorAction SilentlyContinue
+        $optimized = $true
+        foreach ($p in $paths) {
+            $int_mgmt = Join-Path $p.PSPath "Device Parameters\Interrupt Management\MessageSignaledInterruptProperties"
+            $val = Get-ItemProperty -Path $int_mgmt -Name "MSISupported" -ErrorAction SilentlyContinue
+            if ($null -eq $val -or $val.MSISupported -ne 1) { $optimized = $false; break }
+        }
+        Write-Output $optimized
+        '''
+        r = subprocess.run(['powershell', '-Command', ps_script], capture_output=True, text=True, creationflags=0x08000000)
+        out = r.stdout.strip()
+        states["optimize_nvidia_gpu"] = ("True" in out) if "NotNvidia" not in out else False
+    except: states["optimize_nvidia_gpu"] = False
 
     return states
 
@@ -789,6 +841,7 @@ class WinRAMApp(ctk.CTk):
         # -- Aba GPU e CPU --
         make_master_btn(tab_gpu_cpu, "🎮", "Otimizar GPU e CPU", "opt_gpu_cpu", fg="#b71c1c", hv="#d32f2f")
         make_action_btn(tab_gpu_cpu, "❌", "Otimizar AMD GPU (ULPS)", "optimize_amd_gpu", fg="#1a1a1a", hv="#2d2d2d")
+        make_action_btn(tab_gpu_cpu, "❌", "Otimizar NVIDIA GPU (MSI/Latência)", "optimize_nvidia_gpu", fg="#1a1a1a", hv="#2d2d2d")
         make_action_btn(tab_gpu_cpu, "❌", "GPU Scheduling (Hardware)", "optimize_gpu_scheduling", fg="#1a1a1a", hv="#2d2d2d")
         make_action_btn(tab_gpu_cpu, "❌", "Tweaks de Registro e Energia", "apply_performance_tweaks", fg="#1a1a1a", hv="#2d2d2d")
 
@@ -935,6 +988,7 @@ class WinRAMApp(ctk.CTk):
             "flush_dns": flush_dns, "optimize_network_latency": optimize_network_latency,
             "reset_network": reset_network, "optimize_gpu_scheduling": optimize_gpu_scheduling,
             "optimize_amd_gpu": optimize_amd_gpu,
+            "optimize_nvidia_gpu": optimize_nvidia_gpu,
             "optimize_drive": optimize_drive, "repair_system": repair_system,
         }
         func = func_map.get(func_name)
