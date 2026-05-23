@@ -467,8 +467,14 @@ def optimize_system(mode="quick"):
                   optimize_gpu_scheduling, optimize_amd_gpu, disable_bloat_and_compression, enable_storage_sense_and_boot, repair_system]
 
 
+    states = check_states()
+    def _run_task_with_check(t):
+        if states.get(t.__name__) == True:
+            return f"[PULADO] A configuração '{t.__name__}' já estava otimizada."
+        return t()
+
     with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-        futures = {executor.submit(t): t for t in tasks}
+        futures = {executor.submit(_run_task_with_check, t): t for t in tasks}
         for future in concurrent.futures.as_completed(futures):
             try:
                 res = future.result()
@@ -543,6 +549,20 @@ def check_states():
         r = subprocess.run(['powershell', '-Command', ps_script], capture_output=True, text=True, creationflags=0x08000000)
         states["disable_bloat_and_compression"] = ("False" in r.stdout)
     except: states["disable_bloat_and_compression"] = False
+
+    # 8. optimize_network_latency
+    try:
+        with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile") as key:
+            val, _ = winreg.QueryValueEx(key, "NetworkThrottlingIndex")
+            states["optimize_network_latency"] = (val == 0xffffffff)
+    except: states["optimize_network_latency"] = False
+
+    # 9. optimize_virtual_memory
+    try:
+        ps_script = "(Get-CimInstance -ClassName Win32_ComputerSystem).AutomaticManagedPagefile"
+        r = subprocess.run(['powershell', '-Command', ps_script], capture_output=True, text=True, creationflags=0x08000000)
+        states["optimize_virtual_memory"] = ("True" in r.stdout)
+    except: states["optimize_virtual_memory"] = False
 
     return states
 
@@ -936,16 +956,23 @@ class WinRAMApp(ctk.CTk):
 
         def _run():
             try:
-                result = func()
-                self.console_text.configure(state="normal")
-                if "Erro" in str(result) or "Aviso" in str(result):
-                    self.console_text.insert("end", f"  [!] {result}\n", "error_tag")
-                    self.console_text.tag_config("error_tag", foreground=Theme.ACCENT_ORANGE)
+                states = check_states()
+                if states.get(func_name) == True:
+                    self.console_text.configure(state="normal")
+                    self.console_text.insert("end", f"  \u2714\ufe0f  [PULADO] A funcao '{func_name}' ja estava otimizada.\n\n")
+                    self.console_text.configure(state="disabled")
+                    self.status_dot.configure(text="\U0001f7e2  CONCLUIDO", text_color=Theme.ACCENT_GREEN)
                 else:
-                    self.console_text.insert("end", f"  \u2714\ufe0f  {result}\n")
-                self.console_text.insert("end", "\n  \u2714\ufe0f  Conclu\u00eddo!\n")
-                self.console_text.configure(state="disabled")
-                self.status_dot.configure(text="\U0001f7e2  CONCLU\u00cdDO", text_color=Theme.ACCENT_GREEN)
+                    result = func()
+                    self.console_text.configure(state="normal")
+                    if "Erro" in str(result) or "Aviso" in str(result):
+                        self.console_text.insert("end", f"  [!] {result}\n", "error_tag")
+                        self.console_text.tag_config("error_tag", foreground=Theme.ACCENT_ORANGE)
+                    else:
+                        self.console_text.insert("end", f"  \u2714\ufe0f  {result}\n")
+                    self.console_text.insert("end", "\n  \u2714\ufe0f  Concluido!\n")
+                    self.console_text.configure(state="disabled")
+                    self.status_dot.configure(text="\U0001f7e2  CONCLUIDO", text_color=Theme.ACCENT_GREEN)
             except Exception as e:
                 self.console_text.configure(state="normal")
                 self.console_text.insert("end", f"  \u274c  ERRO: {e}\n")
