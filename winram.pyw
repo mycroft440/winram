@@ -604,12 +604,13 @@ class WinRAMApp(ctk.CTk):
         self.title("WinRAM Ultimate v2.0")
         window_width = 900
         window_height = 640
+        self.geometry(f"{window_width}x{window_height}")
+        self.update_idletasks()
         screen_width = self.winfo_screenwidth()
         screen_height = self.winfo_screenheight()
-        center_x = int(screen_width/2 - window_width / 2)
-        center_y = int(screen_height/2 - window_height / 2)
-        if center_y > 40: center_y -= 40
-        self.geometry(f"{window_width}x{window_height}+{center_x}+{center_y}")
+        center_x = int((screen_width / 2) - (window_width / 2))
+        center_y = int((screen_height / 2) - (window_height / 2))
+        self.geometry(f"+{center_x}+{center_y}")
         self.resizable(False, False)
         self.configure(fg_color=Theme.BG_DARK)
         
