@@ -2,8 +2,8 @@
 
 - **Acao:** replace-text
 - **Arquivo:** winram.pyw
-- **Backup:** winram.pyw.20260521-190322-975.bak
-- **Data:** 2026-05-21 19:03:22
+- **Backup:** winram.pyw.20260529-115123-963.bak
+- **Data:** 2026-05-29 11:51:23
 
 ### Detalhes
-Ocorrencias identificadas e modificadas: 1
+Ocorrencias identificadas e modificadas: 2

@@ -28,3 +28,101 @@
 - **[2026-05-21 19:03:21]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
 - **[2026-05-21 19:03:22]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
 - **[2026-05-21 19:03:22]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-21 20:01:20]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-21 20:01:55]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-22 13:40:47]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-22 13:40:47]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-22 13:42:27]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-22 13:42:28]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-22 13:50:23]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-22 15:26:53]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-22 16:59:16]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-22 16:59:16]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-22 16:59:47]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-22 17:04:38]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-22 17:05:23]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-22 17:05:24]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-22 17:05:42]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-22 17:12:44]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-22 17:20:20]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-22 17:28:41]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-22 17:32:18]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-22 17:46:20]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-22 17:46:53]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-22 17:46:54]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-22 17:46:56]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-22 17:46:57]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-22 17:48:37]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-22 17:48:38]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-22 17:55:22]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-22 17:55:23]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-22 17:55:24]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-22 17:58:44]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-23 12:12:33]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-23 12:15:24]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-23 12:16:14]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-23 12:16:57]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-23 14:26:24]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-23 14:26:24]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-23 14:26:25]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-23 14:27:12]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-23 14:27:58]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-23 14:27:58]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-23 14:27:59]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-23 14:28:00]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-23 14:28:54]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-23 14:28:55]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-23 14:28:55]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-23 14:28:56]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-23 14:29:40]** `replace-lines` em `winram.pyw`: Substituidas linhas 1073-1100
+- **[2026-05-23 14:29:41]** `replace-lines` em `winram.pyw`: Substituidas linhas 1112-1140
+- **[2026-05-23 14:30:07]** `replace-lines` em `winram.pyw`: Substituidas linhas 1073-1100
+- **[2026-05-23 14:30:07]** `replace-lines` em `winram.pyw`: Substituidas linhas 1112-1141
+- **[2026-05-23 14:30:41]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-23 14:30:42]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-23 14:30:42]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-23 14:30:43]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-23 14:30:44]** `replace-lines` em `winram.pyw`: Substituidas linhas 1073-1100
+- **[2026-05-23 14:30:44]** `replace-lines` em `winram.pyw`: Substituidas linhas 1112-1140
+- **[2026-05-23 15:42:39]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-23 15:42:40]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-23 15:42:40]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-23 15:42:41]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-23 15:42:42]** `replace-lines` em `winram.pyw`: Substituidas linhas 1073-1100
+- **[2026-05-23 15:42:42]** `replace-lines` em `winram.pyw`: Substituidas linhas 1112-1140
+- **[2026-05-23 15:43:34]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-23 15:43:34]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-23 15:43:35]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-23 15:43:36]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-23 15:43:36]** `replace-lines` em `winram.pyw`: Substituidas linhas 1073-1110
+- **[2026-05-23 15:43:37]** `replace-lines` em `winram.pyw`: Substituidas linhas 1122-1150
+- **[2026-05-23 15:44:11]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-23 15:44:11]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-23 15:44:12]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-23 15:44:13]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-23 15:44:13]** `replace-lines` em `winram.pyw`: Substituidas linhas 1122-1150
+- **[2026-05-23 15:44:14]** `replace-lines` em `winram.pyw`: Substituidas linhas 1073-1110
+- **[2026-05-23 15:45:07]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-23 15:45:07]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-23 15:45:08]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-23 15:45:08]** `replace-lines` em `winram.pyw`: Substituidas linhas 1028-1038
+- **[2026-05-23 15:45:09]** `replace-lines` em `winram.pyw`: Substituidas linhas 1112-1140
+- **[2026-05-23 15:45:10]** `replace-lines` em `winram.pyw`: Substituidas linhas 1073-1100
+- **[2026-05-23 15:45:44]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-23 15:45:45]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-23 15:45:45]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 1
+- **[2026-05-23 15:45:46]** `replace-lines` em `winram.pyw`: Substituidas linhas 1028-1038
+- **[2026-05-23 15:45:47]** `replace-lines` em `winram.pyw`: Substituidas linhas 1112-1140
+- **[2026-05-23 15:45:47]** `replace-lines` em `winram.pyw`: Substituidas linhas 1073-1100
+- **[2026-05-23 17:47:37]** `replace-lines` em `winram.pyw`: Substituidas linhas 213-213
+- **[2026-05-23 17:47:38]** `replace-lines` em `winram.pyw`: Substituidas linhas 699-699
+- **[2026-05-23 17:47:39]** `replace-lines` em `winram.pyw`: Substituidas linhas 948-948
+- **[2026-05-23 17:47:39]** `replace-lines` em `winram.pyw`: Substituidas linhas 1090-1090
+- **[2026-05-23 17:47:50]** `replace-lines` em `winram.pyw`: Substituidas linhas 229-229
+- **[2026-05-23 18:06:38]** `replace-lines` em `winram.pyw`: Substituidas linhas 238-238
+- **[2026-05-23 18:06:38]** `replace-lines` em `winram.pyw`: Substituidas linhas 968-968
+- **[2026-05-23 18:06:39]** `replace-lines` em `winram.pyw`: Substituidas linhas 1111-1111
+- **[2026-05-23 18:09:23]** `replace-lines` em `winram.pyw`: Substituidas linhas 213-236
+- **[2026-05-23 18:09:24]** `replace-lines` em `winram.pyw`: Substituidas linhas 1128-1128
+- **[2026-05-29 08:47:39]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 2
+- **[2026-05-29 11:51:23]** `replace-text` em `winram.pyw`: Ocorrencias identificadas e modificadas: 2

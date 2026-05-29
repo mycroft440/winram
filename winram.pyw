@@ -384,7 +384,7 @@ def clean_ram():
     for proc in psutil.process_iter(['pid', 'memory_info', 'name']):
         try:
             if not proc.info.get('name'): continue
-            if proc.info['name'].lower() in ['smss.exe', 'csrss.exe', 'wininit.exe', 'services.exe', 'syntpenh.exe', 'audiodg.exe', 'dwm.exe', 'nvcontainer.exe', 'rtkngui64.exe', 'ravbg64.exe', 'explorer.exe', 'startmenuexperiencehost.exe', 'searchhost.exe']: continue
+            if proc.info['name'].lower() in ['smss.exe', 'csrss.exe', 'wininit.exe', 'services.exe', 'syntpenh.exe', 'audiodg.exe', 'dwm.exe', 'nvcontainer.exe', 'rtkngui64.exe', 'ravbg64.exe', 'explorer.exe', 'startmenuexperiencehost.exe', 'searchhost.exe', 'shellexperiencehost.exe', 'runtimebroker.exe', 'sihost.exe', 'taskhostw.exe', 'ctfmon.exe']: continue
             if proc.info.get('memory_info') and proc.info['memory_info'].rss > 26214400:
                 handle = kernel32.OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_SET_QUOTA, False, proc.info['pid'])
                 if handle:
@@ -481,10 +481,6 @@ def apply_performance_tweaks():
         with winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Policies\Microsoft\Windows\DataCollection") as key: winreg.SetValueEx(key, "AllowTelemetry", 0, winreg.REG_DWORD, 0)
     _safe_reg(t3)
 
-    # Disable MPO (Multi-Plane Overlay) to fix stuttering/black screens on AMD/NVIDIA
-    def t_mpo():
-        with winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows\Dwm") as key: winreg.SetValueEx(key, "OverlayTestMode", 0, winreg.REG_DWORD, 5)
-    _safe_reg(t_mpo)
 
     # Disable GameDVR overhead
     def t_gamedvr():
@@ -492,17 +488,8 @@ def apply_performance_tweaks():
         with winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Policies\Microsoft\Windows\GameDVR") as key: winreg.SetValueEx(key, "AllowGameDVR", 0, winreg.REG_DWORD, 0)
     _safe_reg(t_gamedvr)
 
-    def t4():
-        with winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize") as key: winreg.SetValueEx(key, "EnableTransparency", 0, winreg.REG_DWORD, 0)
-    _safe_reg(t4)
 
-    def t5():
-        with winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\DWM") as key: winreg.SetValueEx(key, "EnableAeroPeek", 0, winreg.REG_DWORD, 0)
-    _safe_reg(t5)
 
-    def t6():
-        with winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects") as key: winreg.SetValueEx(key, "VisualFXSetting", 0, winreg.REG_DWORD, 3)
-    _safe_reg(t6)
 
     def t7():
         with winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced") as key:
@@ -618,11 +605,11 @@ def check_states():
     """Retorna um dicionario com o estado de otimizacao das funcoes trackeaveis"""
     states = {}
     
-    # 1. apply_performance_tweaks (MPO)
+    # 1. apply_performance_tweaks (GameDVR)
     try:
-        with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows\Dwm") as key:
-            val, _ = winreg.QueryValueEx(key, "OverlayTestMode")
-            states["apply_performance_tweaks"] = (val == 5)
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"System\GameConfigStore") as key:
+            val, _ = winreg.QueryValueEx(key, "GameDVR_Enabled")
+            states["apply_performance_tweaks"] = (val == 0)
     except: states["apply_performance_tweaks"] = False
 
     # 2. optimize_gpu_scheduling
@@ -1251,7 +1238,19 @@ def daemon_main():
     if kernel32.GetLastError() == 183:
         sys.exit(0)
 
-    GAMES_LIST = ["cs2.exe", "valorant.exe", "gta5.exe", "cyberpunk2077.exe", "dota2.exe", "leagueoflegends.exe", "r5apex.exe", "overwatch.exe", "bf2042.exe", "pubg.exe", "eldenring.exe", "cod.exe", "forzahorizon5.exe"]
+    GAMES_LIST = [
+        "cs2.exe", "valorant.exe", "gta5.exe", "gtav.exe", "cyberpunk2077.exe",
+        "dota2.exe", "leagueoflegends.exe", "r5apex.exe", "overwatch.exe",
+        "bf2042.exe", "pubg.exe", "eldenring.exe", "cod.exe", "forzahorizon5.exe",
+        "rocketleague.exe", "minecraft.exe", "javaw.exe", "deadbydaylight-win64-shipping.exe",
+        "hogwartslegacy.exe", "starfield.exe", "baldursgate3.exe", "bg3.exe",
+        "palworld-win64-shipping.exe", "helldivers2.exe", "thewitcher3.exe",
+        "rdr2.exe", "nms.exe", "sekiro.exe", "darksouls3.exe",
+        "left4dead2.exe", "tf2.exe", "rust.exe", "ark.exe", "dayz.exe",
+        "warzone.exe", "modernwarfare.exe", "destiny2.exe", "diablo4.exe",
+        "pathofexile.exe", "lostark.exe", "newworld.exe", "genshinimpact.exe",
+        "wukong.exe", "b1-win64-shipping.exe"
+    ]
     game_mode_active = False
 
     def clean_ram():
@@ -1264,7 +1263,7 @@ def daemon_main():
         for proc in psutil.process_iter(['pid', 'memory_info', 'name']):
             try:
                 if not proc.info.get('name'): continue
-                if proc.info['name'].lower() in ['smss.exe', 'csrss.exe', 'wininit.exe', 'services.exe', 'syntpenh.exe', 'audiodg.exe', 'dwm.exe', 'nvcontainer.exe', 'rtkngui64.exe', 'ravbg64.exe', 'explorer.exe', 'startmenuexperiencehost.exe', 'searchhost.exe']: continue
+                if proc.info['name'].lower() in ['smss.exe', 'csrss.exe', 'wininit.exe', 'services.exe', 'syntpenh.exe', 'audiodg.exe', 'dwm.exe', 'nvcontainer.exe', 'rtkngui64.exe', 'ravbg64.exe', 'explorer.exe', 'startmenuexperiencehost.exe', 'searchhost.exe', 'shellexperiencehost.exe', 'runtimebroker.exe', 'sihost.exe', 'taskhostw.exe', 'ctfmon.exe']: continue
                 if proc.info.get('memory_info') and proc.info['memory_info'].rss > 26214400:
                     handle = k32.OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_SET_QUOTA, False, proc.info['pid'])
                     if handle:
@@ -1273,15 +1272,27 @@ def daemon_main():
             except: continue
 
     def check_games_running():
-        for proc in psutil.process_iter(['name', 'pid']):
+        for proc in psutil.process_iter(['name', 'pid', 'memory_info']):
             try:
-                if proc.info['name'] and proc.info['name'].lower() in GAMES_LIST:
+                name = proc.info.get('name', '').lower()
+                if not name: continue
+                # Detecção direta por lista
+                if name in GAMES_LIST:
                     return proc
+                # Detecção dinâmica: qualquer .exe desconhecido usando >1GB de RAM
+                # provavelmente é um jogo ou app pesado que merece prioridade
+                mem = proc.info.get('memory_info')
+                if mem and mem.rss > 1073741824:  # 1GB
+                    if name not in ['explorer.exe', 'searchhost.exe', 'brave.exe',
+                                    'chrome.exe', 'msedge.exe', 'firefox.exe',
+                                    'code.exe', 'devenv.exe', 'pythonw.exe',
+                                    'python.exe', 'svchost.exe', 'system',
+                                    'antimalware service executable']:
+                        return proc
             except:
                 continue
         return None
 
-    last_explorer_check = time.time()
     last_24h_clean = time.time()
     last_3h_clean = time.time()
     last_ram_clean = 0
