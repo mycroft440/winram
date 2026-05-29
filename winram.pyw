@@ -115,10 +115,7 @@ def disable_vbs_and_visuals():
             winreg.SetValueEx(key, "Enabled", 0, winreg.REG_DWORD, 0)
     except Exception as e: logs.append(f"VBS falhou: {e}")
 
-    try:
-        with winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects") as key:
-            winreg.SetValueEx(key, "VisualFXSetting", 0, winreg.REG_DWORD, 2)
-    except Exception as e: logs.append(f"Visuais falhou: {e}")
+
 
     try:
         with winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management") as key:
