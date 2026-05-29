@@ -387,7 +387,7 @@ def clean_ram():
     for proc in psutil.process_iter(['pid', 'memory_info', 'name']):
         try:
             if not proc.info.get('name'): continue
-            if proc.info['name'].lower() in ['smss.exe', 'csrss.exe', 'wininit.exe', 'services.exe', 'syntpenh.exe', 'audiodg.exe', 'dwm.exe', 'nvcontainer.exe', 'rtkngui64.exe', 'ravbg64.exe']: continue
+            if proc.info['name'].lower() in ['smss.exe', 'csrss.exe', 'wininit.exe', 'services.exe', 'syntpenh.exe', 'audiodg.exe', 'dwm.exe', 'nvcontainer.exe', 'rtkngui64.exe', 'ravbg64.exe', 'explorer.exe', 'startmenuexperiencehost.exe', 'searchhost.exe']: continue
             if proc.info.get('memory_info') and proc.info['memory_info'].rss > 26214400:
                 handle = kernel32.OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_SET_QUOTA, False, proc.info['pid'])
                 if handle:
@@ -1267,7 +1267,7 @@ def daemon_main():
         for proc in psutil.process_iter(['pid', 'memory_info', 'name']):
             try:
                 if not proc.info.get('name'): continue
-                if proc.info['name'].lower() in ['smss.exe', 'csrss.exe', 'wininit.exe', 'services.exe', 'syntpenh.exe', 'audiodg.exe', 'dwm.exe', 'nvcontainer.exe', 'rtkngui64.exe', 'ravbg64.exe']: continue
+                if proc.info['name'].lower() in ['smss.exe', 'csrss.exe', 'wininit.exe', 'services.exe', 'syntpenh.exe', 'audiodg.exe', 'dwm.exe', 'nvcontainer.exe', 'rtkngui64.exe', 'ravbg64.exe', 'explorer.exe', 'startmenuexperiencehost.exe', 'searchhost.exe']: continue
                 if proc.info.get('memory_info') and proc.info['memory_info'].rss > 26214400:
                     handle = k32.OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_SET_QUOTA, False, proc.info['pid'])
                     if handle:
