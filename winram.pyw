@@ -51,13 +51,22 @@ def kill_memory_hogs():
 
 def restart_explorer():
     try:
-        r = subprocess.run(['taskkill', '/F', '/IM', 'explorer.exe'], capture_output=True, text=True, creationflags=0x08000000)
-        subprocess.Popen(['explorer.exe'])
-        if r.returncode != 0 and "not found" not in r.stderr.lower():
-            return f"Aviso ao matar explorer: {r.stderr.strip()}"
-        return "Windows Shell reiniciado (Vazamento de RAM contido)."
+        import psutil, ctypes
+        psapi = ctypes.WinDLL('psapi.dll')
+        k32 = ctypes.WinDLL('kernel32.dll')
+        freed = False
+        for proc in psutil.process_iter(['pid', 'name']):
+            if proc.info.get('name') and proc.info['name'].lower() == 'explorer.exe':
+                handle = k32.OpenProcess(0x0400 | 0x0100, False, proc.info['pid'])
+                if handle:
+                    psapi.EmptyWorkingSet(handle)
+                    k32.CloseHandle(handle)
+                    freed = True
+        if freed:
+            return "Windows Shell Drenado (Vazamento devolvido ao PC sem fechar a barra)."
+        return "Windows Shell otimizado."
     except Exception as e:
-        return f"Falha ao reiniciar o Windows Shell: {e}"
+        return f"Falha ao drenar o Windows Shell: {e}"
 
 def optimize_virtual_memory():
     if not is_admin(): return "Aviso: Otimizar Memória Virtual exige Admin."
@@ -121,13 +130,6 @@ def disable_vbs_and_visuals():
     if logs: return "Otimização Visual/VBS/Spectre concluída com erros: " + " | ".join(logs)
     return "VBS, Efeitos Visuais e Mitigações Spectre desativados (Max CPU)."
     
-    try:
-        with winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects") as key:
-            winreg.SetValueEx(key, "VisualFXSetting", 0, winreg.REG_DWORD, 2)
-    except Exception as e: logs.append(f"Visuais falhou: {e}")
-    
-    if logs: return "Otimização Visual/VBS concluída com erros: " + " | ".join(logs)
-    return "VBS (Virtualization) e Efeitos Visuais otimizados."
 
 def optimize_amd_gpu():
     if not is_admin(): return "Aviso: Otimizar AMD GPU exige Admin."
@@ -183,8 +185,6 @@ def optimize_nvidia_gpu():
         return r.stdout.strip() if r.stdout.strip() else "Erro ao executar otimização NVIDIA."
     except Exception as e: return f"Falha NVIDIA: {e}"
 
-    except Exception as e:
-        return f"Erro ao tentar otimizar AMD GPU: {e}"
 
 def optimize_gpu_scheduling():
     logs = []
@@ -218,6 +218,49 @@ def optimize_cpu_extreme():
 
     if logs: return "Otimização Extrema de CPU concluída com erros: " + " | ".join(logs)
     return "CPU Extrema: Quantum configurado para Server e Mitigações desligadas. Reinicie o PC."
+
+def enable_throttlestop():
+    if not is_admin(): return "Aviso: Ativar ThrottleStop exige Admin."
+    import shutil, os, subprocess
+    src_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ThrottleStop")
+    dest_dir = r"C:\ProgramData\WinRAM_ThrottleStop"
+    exe_path = os.path.join(dest_dir, "ThrottleStop.exe")
+    
+    if not os.path.exists(dest_dir):
+        if not os.path.exists(src_dir):
+            return "Erro: Pasta ThrottleStop não encontrada no repositório."
+        try:
+            shutil.copytree(src_dir, dest_dir)
+        except Exception as e:
+            return f"Erro ao copiar arquivos do ThrottleStop: {e}"
+            
+    task_cmd = f'''$A = New-ScheduledTaskAction -Execute "{exe_path}"; $T = New-ScheduledTaskTrigger -AtLogon; $S = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit (New-TimeSpan -Days 9999); $P = New-ScheduledTaskPrincipal -UserId "NT AUTHORITY\\SYSTEM" -LogonType ServiceAccount -RunLevel Highest; $Task = New-ScheduledTask -Action $A -Principal $P -Trigger $T -Settings $S; Register-ScheduledTask -TaskName "WinRAM_ThrottleStop_Auto" -InputObject $Task -Force'''
+    
+    r = subprocess.run(["powershell", "-Command", task_cmd], capture_output=True, text=True, creationflags=0x08000000)
+    if r.returncode != 0:
+        return f"Erro ao criar tarefa agendada: {r.stderr.strip()}"
+    
+    subprocess.Popen([exe_path], creationflags=0x08000000)
+    return "ThrottleStop iniciado/aberto com sucesso!"
+
+def run_cpu_stress():
+    if not is_admin(): return "Aviso: O Teste de Estresse exige Admin."
+    import multiprocessing, subprocess, sys, time
+    cores = multiprocessing.cpu_count()
+    processes = []
+    duration = 60
+    try:
+        for _ in range(cores):
+            p = subprocess.Popen([sys.executable, "-c", "while True: pass"], creationflags=0x08000000)
+            processes.append(p)
+        time.sleep(duration)
+    except Exception as e:
+        return f"Erro durante o teste de estresse: {e}"
+    finally:
+        for p in processes:
+            try: p.kill()
+            except: pass
+    return f"CPU sobreviveu a {duration}s em 100% de uso. Undervolt estável!"
 
 def optimize_kernel_io():
     if not is_admin(): return "Aviso: Otimizar Kernel exige permissões de Administrador."
@@ -344,7 +387,7 @@ def clean_ram():
     for proc in psutil.process_iter(['pid', 'memory_info', 'name']):
         try:
             if not proc.info.get('name'): continue
-            if proc.info['name'].lower() in ['smss.exe', 'csrss.exe', 'wininit.exe', 'services.exe']: continue
+            if proc.info['name'].lower() in ['smss.exe', 'csrss.exe', 'wininit.exe', 'services.exe', 'syntpenh.exe', 'audiodg.exe', 'dwm.exe', 'nvcontainer.exe', 'rtkngui64.exe', 'ravbg64.exe']: continue
             if proc.info.get('memory_info') and proc.info['memory_info'].rss > 26214400:
                 handle = kernel32.OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_SET_QUOTA, False, proc.info['pid'])
                 if handle:
@@ -488,8 +531,6 @@ def apply_performance_tweaks():
 
     if logs: return "Ajustes de registro aplicados com avisos: " + " | ".join(logs)
     return "Ajustes de registro, energia e Core Unparking aplicados."
-    if logs: return "Ajustes de registro aplicados com avisos: " + " | ".join(logs)
-    return "Ajustes de registro e energia aplicados."
 
 def reset_network():
     if not is_admin(): return "Aviso: Reset de rede exige Admin."
@@ -537,7 +578,7 @@ def optimize_system(mode="quick"):
         tasks = [clean_ram, clean_temp_folders, flush_dns, optimize_drive,
                   clear_event_logs, apply_performance_tweaks, reset_network, enable_storage_sense_and_boot]
     elif mode == "ram_boost":
-        tasks = [kill_memory_hogs, clean_ram, restart_explorer, optimize_virtual_memory]
+        tasks = [kill_memory_hogs, clean_ram, optimize_virtual_memory]
     elif mode == "opt_limpeza":
         tasks = [clean_ram, clean_temp_folders, clear_standby_and_shaders, clear_event_logs, kill_memory_hogs]
     elif mode == "opt_rede":
@@ -545,7 +586,7 @@ def optimize_system(mode="quick"):
     elif mode == "opt_gpu_cpu":
         tasks = [optimize_amd_gpu, optimize_nvidia_gpu, optimize_gpu_scheduling, apply_performance_tweaks]
     elif mode == "opt_computador":
-        tasks = [disable_useless_services, disable_vbs_and_visuals, disable_bloat_and_compression, enable_storage_sense_and_boot, optimize_drive, restart_explorer, repair_system]
+        tasks = [disable_useless_services, disable_vbs_and_visuals, disable_bloat_and_compression, enable_storage_sense_and_boot, optimize_drive, repair_system]
     elif mode == "god_mode" or mode == "all_in_one":
         tasks = [clean_ram, clear_standby_and_shaders, clean_temp_folders, flush_dns,
                   optimize_cpu_extreme, optimize_kernel_io, optimize_network_latency, optimize_drive, clear_event_logs,
@@ -681,6 +722,12 @@ def check_states():
         r = subprocess.run(['fsutil', 'behavior', 'query', 'disablelastaccess'], capture_output=True, text=True, creationflags=0x08000000)
         states["optimize_kernel_io"] = "1" in r.stdout or "3" in r.stdout
     except: states["optimize_kernel_io"] = False
+
+    # enable_throttlestop
+    try:
+        r = subprocess.run(['schtasks', '/query', '/TN', 'WinRAM_ThrottleStop_Auto'], capture_output=True, text=True, creationflags=0x08000000)
+        states["enable_throttlestop"] = r.returncode == 0
+    except: states["enable_throttlestop"] = False
 
     return states
 
@@ -926,6 +973,8 @@ class WinRAMApp(ctk.CTk):
         # -- Aba Computador --
         make_master_btn(scroll_comp, "⚙️", "Otimizar Computador", "opt_computador", fg=Theme.ADV_FG, hv=Theme.ADV_HV)
         make_action_btn(scroll_comp, "❌", "Otimizar CPU Extremo (Quantum/Mitigações)", "optimize_cpu_extreme", fg="#1a1a1a", hv="#2d2d2d")
+        make_action_btn(scroll_comp, "⚡", "Ativar ThrottleStop (Undervolt)", "enable_throttlestop", fg="#8b1a1a", hv="#c62828")
+        make_action_btn(scroll_comp, "🔥", "Teste de Estresse da CPU (60s)", "run_cpu_stress", fg="#8b1a1a", hv="#c62828")
         make_action_btn(scroll_comp, "❌", "Otimizar Kernel & I/O Extremo", "optimize_kernel_io", fg="#1a1a1a", hv="#2d2d2d")
         make_action_btn(scroll_comp, "❌", "Desativar Serviços Inúteis", "disable_useless_services", fg="#1a1a1a", hv="#2d2d2d")
         make_action_btn(scroll_comp, "❌", "Desativar VBS e Visuais", "disable_vbs_and_visuals", fg="#1a1a1a", hv="#2d2d2d")
@@ -1039,13 +1088,14 @@ class WinRAMApp(ctk.CTk):
     def refresh_button_states(self):
         def _bg_check():
             states = check_states()
-            for func_name, is_opt in states.items():
-                if is_opt and func_name in self.action_btns_dict:
-                    btn = self.action_btns_dict[func_name]
-                    # Update button to show it's optimized
-                    old_text = btn.cget("text")
-                    if "✅" not in old_text and "✔️" not in old_text:
-                        btn.configure(text=old_text.replace(old_text.split()[0], "✅"))
+            def _update_ui():
+                for func_name, is_opt in states.items():
+                    if is_opt and func_name in self.action_btns_dict:
+                        btn = self.action_btns_dict[func_name]
+                        old_text = btn.cget("text")
+                        if "✅" not in old_text and "✔️" not in old_text:
+                            btn.configure(text=old_text.replace(old_text.split()[0], "✅"))
+            self.after(0, _update_ui)
         threading.Thread(target=_bg_check, daemon=True).start()
 
     def set_buttons_state(self, state):
@@ -1066,6 +1116,7 @@ class WinRAMApp(ctk.CTk):
             "disable_bloat_and_compression": disable_bloat_and_compression,
             "restart_explorer": restart_explorer, "optimize_virtual_memory": optimize_virtual_memory,
             "flush_dns": flush_dns, "optimize_network_latency": optimize_network_latency, "optimize_cpu_extreme": optimize_cpu_extreme, "optimize_kernel_io": optimize_kernel_io,
+            "enable_throttlestop": enable_throttlestop, "run_cpu_stress": run_cpu_stress,
             "reset_network": reset_network, "optimize_gpu_scheduling": optimize_gpu_scheduling,
             "optimize_amd_gpu": optimize_amd_gpu,
             "optimize_nvidia_gpu": optimize_nvidia_gpu,
@@ -1083,30 +1134,36 @@ class WinRAMApp(ctk.CTk):
         def _run():
             try:
                 states = check_states()
-                if states.get(func_name) == True:
-                    self.console_text.configure(state="normal")
-                    self.console_text.insert("end", f"  \u2714\ufe0f  [PULADO] A funcao '{func_name}' ja estava otimizada.\n\n")
-                    self.console_text.configure(state="disabled")
-                    self.status_dot.configure(text="\U0001f7e2  CONCLUIDO", text_color=Theme.ACCENT_GREEN)
+                if states.get(func_name) == True and func_name not in ["enable_throttlestop", "run_cpu_stress"]:
+                    def _ui_skip():
+                        self.console_text.configure(state="normal")
+                        self.console_text.insert("end", f"  ✔️  [PULADO] A funcao '{func_name}' ja estava otimizada.\n\n")
+                        self.console_text.configure(state="disabled")
+                        self.status_dot.configure(text="🟢  CONCLUIDO", text_color=Theme.ACCENT_GREEN)
+                    self.after(0, _ui_skip)
                 else:
                     result = func()
-                    self.console_text.configure(state="normal")
-                    if "Erro" in str(result) or "Aviso" in str(result):
-                        self.console_text.insert("end", f"  [!] {result}\n", "error_tag")
-                        self.console_text.tag_config("error_tag", foreground=Theme.ACCENT_ORANGE)
-                    else:
-                        self.console_text.insert("end", f"  \u2714\ufe0f  {result}\n")
-                    self.console_text.insert("end", "\n  \u2714\ufe0f  Concluido!\n")
-                    self.console_text.configure(state="disabled")
-                    self.status_dot.configure(text="\U0001f7e2  CONCLUIDO", text_color=Theme.ACCENT_GREEN)
+                    def _ui_done(r=result):
+                        self.console_text.configure(state="normal")
+                        if "Erro" in str(r) or "Aviso" in str(r):
+                            self.console_text.insert("end", f"  [!] {r}\n", "error_tag")
+                            self.console_text.tag_config("error_tag", foreground=Theme.ACCENT_ORANGE)
+                        else:
+                            self.console_text.insert("end", f"  ✔️  {r}\n")
+                        self.console_text.insert("end", "\n  ✔️  Concluido!\n")
+                        self.console_text.configure(state="disabled")
+                        self.status_dot.configure(text="🟢  CONCLUIDO", text_color=Theme.ACCENT_GREEN)
+                    self.after(0, _ui_done)
             except Exception as e:
-                self.console_text.configure(state="normal")
-                self.console_text.insert("end", f"  \u274c  ERRO: {e}\n")
-                self.console_text.configure(state="disabled")
-                self.status_dot.configure(text="\U0001f534  ERRO", text_color=Theme.ACCENT_RED)
+                def _ui_err(err=e):
+                    self.console_text.configure(state="normal")
+                    self.console_text.insert("end", f"  ❌  ERRO: {err}\n")
+                    self.console_text.configure(state="disabled")
+                    self.status_dot.configure(text="🔴  ERRO", text_color=Theme.ACCENT_RED)
+                self.after(0, _ui_err)
             finally:
-                self.set_buttons_state("normal")
-                self.refresh_button_states()
+                self.after(0, lambda: self.set_buttons_state("normal"))
+                self.after(0, self.refresh_button_states)
         threading.Thread(target=_run, daemon=True).start()
 
     def run_task(self, mode):
@@ -1121,33 +1178,38 @@ class WinRAMApp(ctk.CTk):
 
             for res in optimize_system(mode=mode):
                 lines = res.split("\n")
+                def _r(l=lines):
+                    self.console_text.configure(state="normal")
+                    for line in l:
+                        if "Erro" in line or "Aviso" in line or "Acesso Negado" in line or "Falhou" in line or "falhou" in line:
+                            self.console_text.insert("end", f"  [!] {line}\n", "error_tag")
+                        else:
+                            self.console_text.insert("end", f"  ✔️  {line}\n")
+                    self.console_text.tag_config("error_tag", foreground=Theme.ACCENT_ORANGE)
+                    self.console_text.configure(state="disabled")
+                    self.console_text.see("end")
+                self.after(0, _r)
+
+            def _rt_done():
                 self.console_text.configure(state="normal")
-                for line in lines:
-                    if "Erro" in line or "Aviso" in line or "Acesso Negado" in line or "Falhou" in line or "falhou" in line:
-                        self.console_text.insert("end", f"  [!] {line}\n", "error_tag")
-                    else:
-                        self.console_text.insert("end", f"  ✔️  {line}\n")
-                self.console_text.tag_config("error_tag", foreground=Theme.ACCENT_ORANGE)
+                self.console_text.insert("end", "\n  ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════\n")
+                self.console_text.insert("end", "  ✔️   🔥  OTIMIZAÇÃO CONCLUÍDA COM SUCESSO   🔥\n")
+                self.console_text.insert("end", "  ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════\n\n")
                 self.console_text.configure(state="disabled")
                 self.console_text.see("end")
-
-            self.console_text.configure(state="normal")
-            self.console_text.insert("end", "\n  ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════\n")
-            self.console_text.insert("end", "  ✔️   🔥  OTIMIZAÇÃO CONCLUÍDA COM SUCESSO   🔥\n")
-            self.console_text.insert("end", "  ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════\n\n")
-            self.console_text.configure(state="disabled")
-            self.console_text.see("end")
-
-            self.status_dot.configure(text="🟢  CONCLUÍDO", text_color=Theme.ACCENT_GREEN)
+                self.status_dot.configure(text="🟢  CONCLUÍDO", text_color=Theme.ACCENT_GREEN)
+            self.after(0, _rt_done)
         except Exception as e:
-            self.console_text.configure(state="normal")
-            self.console_text.delete("1.0", "end")
-            self.console_text.insert("end", f"  ❌  ERRO CRÍTICO NA APLICAÇÃO: {e}\n", "error_critical")
-            self.console_text.tag_config("error_critical", foreground=Theme.ACCENT_RED)
-            self.console_text.configure(state="disabled")
-            self.status_dot.configure(text="🔴  ERRO", text_color=Theme.ACCENT_RED)
+            def _rt_err(err=e):
+                self.console_text.configure(state="normal")
+                self.console_text.delete("1.0", "end")
+                self.console_text.insert("end", f"  ❌  ERRO CRÍTICO NA APLICAÇÃO: {err}\n", "error_critical")
+                self.console_text.tag_config("error_critical", foreground=Theme.ACCENT_RED)
+                self.console_text.configure(state="disabled")
+                self.status_dot.configure(text="🔴  ERRO", text_color=Theme.ACCENT_RED)
+            self.after(0, _rt_err)
         finally:
-            self.set_buttons_state("normal")
+            self.after(0, lambda: self.set_buttons_state("normal"))
 
     def toggle_daemon(self):
         key_path = r"Software\Microsoft\Windows\CurrentVersion\Run"
@@ -1205,7 +1267,7 @@ def daemon_main():
         for proc in psutil.process_iter(['pid', 'memory_info', 'name']):
             try:
                 if not proc.info.get('name'): continue
-                if proc.info['name'].lower() in ['smss.exe', 'csrss.exe', 'wininit.exe', 'services.exe']: continue
+                if proc.info['name'].lower() in ['smss.exe', 'csrss.exe', 'wininit.exe', 'services.exe', 'syntpenh.exe', 'audiodg.exe', 'dwm.exe', 'nvcontainer.exe', 'rtkngui64.exe', 'ravbg64.exe']: continue
                 if proc.info.get('memory_info') and proc.info['memory_info'].rss > 26214400:
                     handle = k32.OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_SET_QUOTA, False, proc.info['pid'])
                     if handle:
@@ -1261,17 +1323,6 @@ def daemon_main():
             elif percent < 75:
                 dyn_threshold = 75
                 dyn_cooldown = 300
-
-            # --- 2. Explorer Leak Check (Every 5 mins) ---
-            if now - last_explorer_check >= 300:
-                last_explorer_check = now
-                for proc in psutil.process_iter(['name', 'memory_info']):
-                    try:
-                        if proc.info['name'] and proc.info['name'].lower() == 'explorer.exe':
-                            if proc.info['memory_info'].rss > 800 * 1024 * 1024:
-                                import subprocess
-                                subprocess.run("taskkill /f /im explorer.exe && start explorer.exe", shell=True, creationflags=0x08000000)
-                    except: pass
 
             # --- 3. Temp & Standby Clean (Every 24 hours) ---
             if now - last_24h_clean >= 86400:
