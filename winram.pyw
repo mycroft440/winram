@@ -210,7 +210,7 @@ def optimize_cpu_extreme():
 
     try:
         with winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\PriorityControl") as key:
-            winreg.SetValueEx(key, "Win32PrioritySeparation", 0, winreg.REG_DWORD, 38)
+            winreg.SetValueEx(key, "Win32PrioritySeparation", 0, winreg.REG_DWORD, 2)
     except Exception as e: logs.append(f"Quantum: {e}")
 
     if logs: return "Otimização Extrema de CPU concluída com erros: " + " | ".join(logs)
@@ -294,7 +294,7 @@ def optimize_network_latency():
     try:
         with winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile") as key:
             winreg.SetValueEx(key, "NetworkThrottlingIndex", 0, winreg.REG_DWORD, 0xffffffff)
-            winreg.SetValueEx(key, "SystemResponsiveness", 0, winreg.REG_DWORD, 0)
+            winreg.SetValueEx(key, "SystemResponsiveness", 0, winreg.REG_DWORD, 20)
     except Exception as e: logs.append(f"Throttling Registry: {e}")
 
     try:
@@ -468,7 +468,7 @@ def apply_performance_tweaks():
         except: pass
 
     def t1():
-        with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile", 0, winreg.KEY_SET_VALUE) as key: winreg.SetValueEx(key, "SystemResponsiveness", 0, winreg.REG_DWORD, 1)
+        with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile", 0, winreg.KEY_SET_VALUE) as key: winreg.SetValueEx(key, "SystemResponsiveness", 0, winreg.REG_DWORD, 20)
     _safe_reg(t1)
 
     def t2():
